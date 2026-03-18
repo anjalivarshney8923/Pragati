@@ -1,0 +1,13 @@
+﻿
+> pragati@0.0.0 build
+> vite build
+
+[36mvite v8.0.0 [32mbuilding client environment for production...[36m[39m
+[2K
+transforming...Γ£ô 989 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.45 kB Γöé gzip:   0.29 kB
+dist/assets/index-DBBG_ZcR.css   51.05 kB Γöé gzip:   8.42 kB
+dist/assets/index-CVT6yw9d.js   769.03 kB Γöé gzip: 232.19 kB
+
