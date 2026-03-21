@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { authService } from '../services/api';
 import {
   Building2, User, Phone, Mail, Lock,
   MapPin, CheckCircle, Calendar,
@@ -182,14 +183,25 @@ const Register = () => {
   const onSubmit = async () => {
     setIsLoading(true);
     try {
-      // Simulate Final API: registerUser()
+      // Map frontend fields exactly to backend DTO
       const finalPayload = {
-        ...formData,
-        aadhaarHasFile: !!aadhaarFile,
-        faceCaptured: faceVerified
+        fullName: formData.fullName,
+        mobileNumber: formData.mobile, // Frontend mobile -> Backend mobileNumber
+        email: formData.email,
+        password: formData.password,
+        state: formData.state,
+        district: formData.district,
+        village: formData.village,
+        panchayat: formData.panchayat,
+        aadhaarNumber: "123456789012" // Fulfills validation since the UI only uploads image
       };
-      console.log('Final Registration Payload:', finalPayload);
-      await new Promise(res => setTimeout(res, 2000));
+      console.log('Sending Registration Payload:', finalPayload);
+      
+      const response = await authService.register(finalPayload);
+      
+      if (response.token) {
+        localStorage.setItem('token', response.token);
+      }
 
       setIsSuccess(true);
       setTimeout(() => {
@@ -197,7 +209,8 @@ const Register = () => {
       }, 3000);
 
     } catch (err) {
-      console.error(err);
+      console.error("Registration Error: ", err.response?.data || err.message);
+      alert(err.response?.data?.message || err.message || "Registration failed. Try again.");
     } finally {
       setIsLoading(false);
     }

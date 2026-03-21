@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Building2, Lock, User } from 'lucide-react';
+import { authService } from '../services/api';
 
 import InputField from '../components/InputField';
 import Button from '../components/Button';
@@ -13,16 +14,26 @@ const Login = () => {
   
   const { register, handleSubmit, formState: { errors } } = useForm();
 
-  // Mock API call
+  // Production API Call
   const loginUser = async (data) => {
     setIsLoading(true);
     try {
-      // Simulate network request
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      console.log('Login Payload:', data);
-      navigate('/dashboard'); // Mock redirect
+      const payload = {
+        mobile: data.mobile,
+        password: data.password
+      };
+      console.log('Login Payload prepared:', payload);
+      
+      const response = await authService.login(payload);
+      
+      if (response.token) {
+        localStorage.setItem('token', response.token);
+      }
+      
+      navigate('/dashboard'); 
     } catch (err) {
-      console.error(err);
+      console.error("Login Error: ", err.response?.data || err.message);
+      alert(err.response?.data?.message || err.message || "Login failed. Check your credentials.");
     } finally {
       setIsLoading(false);
     }
