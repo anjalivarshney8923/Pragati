@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { FaArrowRight } from 'react-icons/fa';
+import { Link } from 'react-router-dom';
 
 const Hero = () => {
   return (
@@ -59,9 +60,9 @@ const Hero = () => {
                 Explore Platform
                 <FaArrowRight className="group-hover:translate-x-1 transition-transform" />
               </button>
-              <button className="w-full sm:w-auto px-8 py-3.5 bg-white text-[#1E3A8A] font-semibold rounded-lg border-2 border-[#1E3A8A] hover:bg-gray-50 transition-all shadow-sm">
+              <Link to="/register" className="w-full sm:w-auto px-8 py-3.5 bg-white text-[#1E3A8A] font-semibold rounded-lg border-2 border-[#1E3A8A] hover:bg-gray-50 transition-all shadow-sm flex items-center justify-center">
                 Access Villager Portal
-              </button>
+              </Link>
             </motion.div>
           </motion.div>
 

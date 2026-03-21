@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaGlobe, FaSearch, FaBars, FaTimes, FaFont } from 'react-icons/fa';
 import { MdOutlineAccessibleForward } from 'react-icons/md';
+import { Link } from 'react-router-dom';
 
 const TopUtilityBar = () => {
   const currentDate = new Date().toLocaleDateString('en-IN', {
@@ -74,9 +75,9 @@ const Navbar = () => {
 
         {/* Action Buttons */}
         <div className="hidden lg:flex items-center space-x-3">
-          <button className="border-2 border-[#1E3A8A] text-[#1E3A8A] px-4 py-2 rounded-md text-sm font-semibold hover:bg-[#1E3A8A] hover:text-white transition-all shadow-sm">
+          <Link to="/register" className="border-2 border-[#1E3A8A] text-[#1E3A8A] px-4 py-2 rounded-md text-sm font-semibold hover:bg-[#1E3A8A] hover:text-white transition-all shadow-sm flex items-center justify-center">
             Villager Portal
-          </button>
+          </Link>
           <button className="bg-gradient-to-r from-[#FF9933] to-[#e68a2e] text-white px-4 py-2 rounded-md text-sm font-semibold hover:shadow-lg transition-all shadow-md">
             Governance Portal
           </button>
@@ -112,7 +113,7 @@ const Navbar = () => {
                 </li>
               ))}
               <div className="pt-4 flex flex-col gap-3">
-                <button className="w-full border-2 border-[#1E3A8A] text-[#1E3A8A] py-2 rounded-md font-semibold text-center">Villager Portal</button>
+                <Link to="/register" className="w-full border-2 border-[#1E3A8A] text-[#1E3A8A] py-2 rounded-md font-semibold text-center block">Villager Portal</Link>
                 <button className="w-full bg-[#FF9933] text-white py-2 rounded-md font-semibold text-center mt-2">Governance Portal</button>
               </div>
             </ul>

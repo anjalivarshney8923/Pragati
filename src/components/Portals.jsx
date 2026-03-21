@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { FaUserShield, FaUsers, FaArrowRight, FaCheckCircle } from 'react-icons/fa';
+import { Link } from 'react-router-dom';
 
 const Portals = () => {
   return (
@@ -71,9 +72,9 @@ const Portals = () => {
               </ul>
             </div>
 
-            <button className="w-full py-4 px-6 bg-[#1E3A8A] text-white font-semibold rounded-xl hover:bg-blue-900 transition-all shadow-md group-hover:shadow-lg flex justify-center items-center gap-2">
+            <Link to="/register" className="w-full py-4 px-6 bg-[#1E3A8A] text-white font-semibold rounded-xl hover:bg-blue-900 transition-all shadow-md group-hover:shadow-lg flex justify-center items-center gap-2">
               Enter Villager Portal <FaArrowRight />
-            </button>
+            </Link>
           </motion.div>
 
           {/* Governance Portal Card */}
