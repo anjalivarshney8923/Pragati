@@ -3,6 +3,23 @@ import LandingPage from './pages/LandingPage';
 import Login from './pages/Login';
 import Register from './pages/Register';
 
+// Dashboard Components
+import DashboardLayout from './components/dashboard/DashboardLayout';
+import DashboardOverview from './pages/dashboard/DashboardOverview';
+import RaiseComplaint from './pages/dashboard/RaiseComplaint';
+import VillageFunds from './pages/dashboard/VillageFunds';
+import Expenditure from './pages/dashboard/Expenditure';
+
+// Placeholders for undefined pages
+const Placeholder = ({ title }) => (
+  <div className="flex items-center justify-center p-12 h-[60vh]">
+    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8 text-center max-w-sm w-full">
+      <h2 className="text-2xl font-bold text-slate-800 mb-2">{title}</h2>
+      <p className="text-slate-500">This page is currently under development.</p>
+    </div>
+  </div>
+);
+
 function App() {
   return (
     <Router>
@@ -11,7 +28,17 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/dashboard" element={<div className="p-8 text-center text-2xl font-bold mt-20">Mock Dashboard Placholder Area</div>} />
+          
+          <Route element={<DashboardLayout />}>
+            <Route path="/dashboard" element={<DashboardOverview />} />
+            <Route path="/complaint" element={<RaiseComplaint />} />
+            <Route path="/dashboard/complaints" element={<Placeholder title="My Complaints" />} />
+            <Route path="/dashboard/funds" element={<VillageFunds />} />
+            <Route path="/dashboard/expenditure" element={<Expenditure />} />
+            <Route path="/dashboard/schemes" element={<Placeholder title="Government Schemes" />} />
+            <Route path="/dashboard/notifications" element={<Placeholder title="Notifications" />} />
+            <Route path="/dashboard/support" element={<Placeholder title="Help & Support" />} />
+          </Route>
         </Routes>
       </div>
     </Router>
