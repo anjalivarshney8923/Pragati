@@ -3,8 +3,17 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FaGlobe, FaSearch, FaBars, FaTimes, FaFont } from 'react-icons/fa';
 import { MdOutlineAccessibleForward } from 'react-icons/md';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const TopUtilityBar = () => {
+  const { i18n } = useTranslation();
+  
+  const toggleLanguage = () => {
+    const newLang = i18n.language === 'en' ? 'hi' : 'en';
+    i18n.changeLanguage(newLang);
+    localStorage.setItem('language', newLang);
+  };
+
   const currentDate = new Date().toLocaleDateString('en-IN', {
     weekday: 'long',
     year: 'numeric',
@@ -32,8 +41,11 @@ const TopUtilityBar = () => {
             <button className="px-1 text-xs hover:text-[#FF9933]">A</button>
             <button className="px-1 text-sm hover:text-[#FF9933]">A+</button>
           </div>
-          <button className="hover:text-[#FF9933] transition-colors flex items-center gap-1 font-semibold border border-white/40 px-2 py-0.5 rounded text-[10px]">
-            <FaGlobe size={10} /> English
+          <button 
+            onClick={toggleLanguage}
+            className="hover:text-[#FF9933] transition-colors flex items-center gap-1 font-semibold border border-white/40 px-2 py-0.5 rounded text-[10px]"
+          >
+            <FaGlobe size={10} /> {i18n.language === 'en' ? 'हिंदी' : 'English'}
           </button>
         </div>
       </div>

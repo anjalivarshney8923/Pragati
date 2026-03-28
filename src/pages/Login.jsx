@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Building2, Lock, User } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { authService } from '../services/api';
 
 import InputField from '../components/InputField';
@@ -11,6 +12,7 @@ import Button from '../components/Button';
 const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { t } = useTranslation();
   
   const { register, handleSubmit, formState: { errors } } = useForm();
 
@@ -61,13 +63,13 @@ const Login = () => {
             
             <div>
               <h1 className="text-3xl font-extrabold tracking-tight mb-4">
-                PRAGATI
+                {t('login.title')}
                 <span className="block text-xl font-normal mt-2 text-blue-200">
-                  Villager Portal (GramSetu)
+                  {t('login.subTitle')}
                 </span>
               </h1>
               <p className="text-blue-100 max-w-sm mx-auto leading-relaxed">
-                Empowering rural citizens through digital governance. Access government services, schemes, and panchayat updates directly.
+                {t('login.description')}
               </p>
             </div>
             
@@ -86,8 +88,8 @@ const Login = () => {
           </div>
 
           <div className="mb-10 text-center md:text-left">
-            <h2 className="text-3xl font-bold text-slate-800">Welcome Back</h2>
-            <p className="text-slate-500 mt-2">Sign in to access your digital GramSetu services.</p>
+            <h2 className="text-3xl font-bold text-slate-800">{t('login.welcomeBack')}</h2>
+            <p className="text-slate-500 mt-2">{t('login.signInSub')}</p>
           </div>
 
           <motion.form
@@ -99,21 +101,21 @@ const Login = () => {
             className="space-y-6"
           >
             <InputField
-              label="Mobile Number"
+              label={t('login.mobileNumber')}
               name="mobile"
               icon={User}
-              placeholder="Enter your registered mobile number"
-              {...register('mobile', { required: 'Mobile is required' })}
+              placeholder={t('login.mobilePlaceholder')}
+              {...register('mobile', { required: t('login.mobileRequired') })}
               error={errors.mobile}
             />
             
             <InputField
-              label="Password"
+              label={t('login.password')}
               name="password"
               type="password"
               icon={Lock}
-              placeholder="Enter your secure password"
-              {...register('password', { required: 'Password is required' })}
+              placeholder={t('login.passwordPlaceholder')}
+              {...register('password', { required: t('login.passwordRequired') })}
               error={errors.password}
             />
 
@@ -126,24 +128,24 @@ const Login = () => {
                   {...register('remember')}
                 />
                 <label htmlFor="remember-me" className="ml-2 block text-slate-700">
-                  Remember me
+                  {t('login.rememberMe')}
                 </label>
               </div>
               <a href="#" className="font-medium text-[#1E3A8A] hover:underline">
-                Forgot Password?
+                {t('login.forgotPassword')}
               </a>
             </div>
 
             <Button type="submit" isLoading={isLoading} className="w-full text-lg py-3 shadow-md mt-6">
-              Login
+              {t('login.loginBtn')}
             </Button>
           </motion.form>
 
           <div className="mt-10 pt-6 border-t border-slate-200 text-center">
             <p className="text-slate-600">
-              New user?{' '}
+              {t('login.newUser')}{' '}
               <Link to="/register" className="font-semibold text-[#138808] hover:underline transition-colors">
-                Register here
+                {t('login.registerHere')}
               </Link>
             </p>
           </div>

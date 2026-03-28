@@ -11,17 +11,20 @@ import {
   HelpCircle,
   X
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const Sidebar = ({ isOpen, setIsOpen }) => {
+  const { t } = useTranslation();
+  
   const menuItems = [
-    { name: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={20} /> },
-    { name: 'Raise Complaint', path: '/complaint', icon: <FileWarning size={20} /> },
-    { name: 'My Complaints', path: '/dashboard/complaints', icon: <History size={20} /> },
-    { name: 'Village Funds', path: '/dashboard/funds', icon: <Wallet size={20} /> },
-    { name: 'Expenditure', path: '/dashboard/expenditure', icon: <ReceiptIndianRupee size={20} /> },
-    { name: 'Government Schemes', path: '/dashboard/schemes', icon: <Landmark size={20} /> },
-    { name: 'Notifications', path: '/dashboard/notifications', icon: <Bell size={20} /> },
-    { name: 'Help & Support', path: '/dashboard/support', icon: <HelpCircle size={20} /> },
+    { name: t('sidebar.dashboard'), path: '/dashboard', icon: <LayoutDashboard size={20} /> },
+    { name: t('sidebar.raiseComplaint'), path: '/complaint', icon: <FileWarning size={20} /> },
+    { name: t('sidebar.myComplaints'), path: '/dashboard/complaints', icon: <History size={20} /> },
+    { name: t('sidebar.villageFunds'), path: '/dashboard/funds', icon: <Wallet size={20} /> },
+    { name: t('sidebar.expenditure'), path: '/dashboard/expenditure', icon: <ReceiptIndianRupee size={20} /> },
+    { name: t('sidebar.schemes'), path: '/dashboard/schemes', icon: <Landmark size={20} /> },
+    { name: t('sidebar.notifications'), path: '/dashboard/notifications', icon: <Bell size={20} /> },
+    { name: t('sidebar.helpSupport'), path: '/dashboard/support', icon: <HelpCircle size={20} /> },
   ];
 
   return (
@@ -41,7 +44,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
         }`}
       >
         <div className="h-16 flex items-center justify-between px-6 border-b border-slate-200 lg:hidden">
-          <span className="text-xl font-bold text-gov-blue">Menu</span>
+          <span className="text-xl font-bold text-gov-blue">{t('sidebar.menu')}</span>
           <button onClick={() => setIsOpen(false)} className="text-slate-500 hover:text-slate-700">
             <X size={24} />
           </button>
@@ -75,7 +78,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
             <div className="bg-gov-blue text-white w-10 h-10 rounded-full flex items-center justify-center mb-2 font-bold shadow-sm">
               <span className="text-xs">Pragati</span>
             </div>
-            <p className="text-xs text-slate-600 font-medium">Empowering Rural India</p>
+            <p className="text-xs text-slate-600 font-medium">{t('sidebar.empowering')}</p>
           </div>
         </div>
       </aside>

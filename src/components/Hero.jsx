@@ -2,8 +2,10 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { FaArrowRight } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const Hero = () => {
+  const { t } = useTranslation();
   return (
     <section id="home" className="relative pt-32 pb-20 md:pt-48 md:pb-32 overflow-hidden bg-white">
       {/* Background Abstract Shapes */}
@@ -27,7 +29,7 @@ const Hero = () => {
               transition={{ delay: 0.2, duration: 0.6 }}
               className="inline-block px-4 py-1.5 rounded-full bg-blue-50 text-[#1E3A8A] font-semibold text-sm mb-6 border border-blue-100 uppercase tracking-wide"
             >
-              Digital India Initiative
+              {t('hero.digitalIndia')}
             </motion.div>
             
             <motion.h1 
@@ -36,9 +38,9 @@ const Hero = () => {
               transition={{ delay: 0.4, duration: 0.6 }}
               className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-[#1E3A8A] leading-tight mb-6"
             >
-              Transparent<br className="hidden md:block" /> 
-              <span className="text-[#FF9933]"> Governance</span> for<br className="hidden md:block" /> 
-              Every <span className="text-[#138808]">Village</span>
+              {t('hero.transparent')}<br className="hidden md:block" /> 
+              <span className="text-[#FF9933]">{t('hero.governance')}</span>{t('hero.for')}<br className="hidden md:block" /> 
+              {t('hero.every')}<span className="text-[#138808]">{t('hero.village')}</span>
             </motion.h1>
             
             <motion.p 
@@ -47,7 +49,7 @@ const Hero = () => {
               transition={{ delay: 0.6, duration: 0.6 }}
               className="text-lg md:text-xl text-gray-600 mb-8 leading-relaxed font-light"
             >
-              Pragati is a digital platform that empowers villagers with transparent access to government funds, development projects, and local administration.
+              {t('hero.description')}
             </motion.p>
             
             <motion.div 
@@ -57,11 +59,11 @@ const Hero = () => {
               className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4"
             >
               <button className="w-full sm:w-auto px-8 py-3.5 bg-[#1E3A8A] text-white font-semibold rounded-lg hover:bg-blue-900 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 group">
-                Explore Platform
+                {t('hero.explore')}
                 <FaArrowRight className="group-hover:translate-x-1 transition-transform" />
               </button>
               <Link to="/register" className="w-full sm:w-auto px-8 py-3.5 bg-white text-[#1E3A8A] font-semibold rounded-lg border-2 border-[#1E3A8A] hover:bg-gray-50 transition-all shadow-sm flex items-center justify-center">
-                Access Villager Portal
+                {t('hero.accessPortal')}
               </Link>
             </motion.div>
           </motion.div>

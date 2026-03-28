@@ -1,8 +1,17 @@
 import React from 'react';
 import { Menu, LogOut, User, Bell } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const Navbar = ({ toggleSidebar }) => {
+  const { t, i18n } = useTranslation();
+
+  const toggleLanguage = () => {
+    const newLang = i18n.language === 'en' ? 'hi' : 'en';
+    i18n.changeLanguage(newLang);
+    localStorage.setItem('language', newLang);
+  };
+
   return (
     <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
       <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
@@ -22,8 +31,8 @@ const Navbar = ({ toggleSidebar }) => {
                 <span className="text-white font-bold text-lg leading-none pt-0.5">P</span>
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gov-blue leading-none tracking-tight">Pragati</h1>
-                <p className="text-[10px] text-slate-500 font-medium tracking-wide uppercase mt-0.5">Digital Village Portal</p>
+                <h1 className="text-xl font-bold text-gov-blue leading-none tracking-tight">{t('navbar.title')}</h1>
+                <p className="text-[10px] text-slate-500 font-medium tracking-wide uppercase mt-0.5">{t('navbar.subtitle')}</p>
               </div>
             </Link>
           </div>
@@ -39,9 +48,15 @@ const Navbar = ({ toggleSidebar }) => {
           <div className="h-8 w-px bg-slate-200 hidden sm:block"></div>
 
           <div className="flex items-center gap-3">
+            <button
+              onClick={toggleLanguage}
+              className="px-3 py-1 text-sm font-semibold rounded-full border border-gov-blue text-gov-blue hover:bg-gov-blue hover:text-white transition-colors"
+            >
+              {i18n.language === 'en' ? 'हिंदी' : 'English'}
+            </button>
             <div className="hidden sm:flex flex-col items-end">
               <span className="text-sm font-semibold text-slate-700 leading-none mb-1">Anjali</span>
-              <span className="text-xs text-slate-500 leading-none">Villager</span>
+              <span className="text-xs text-slate-500 leading-none">{t('navbar.villager')}</span>
             </div>
             <button className="flex items-center gap-2 hover:opacity-80 transition-opacity focus:outline-none">
               <div className="h-9 w-9 rounded-full bg-blue-100 flex items-center justify-center border border-blue-200 text-gov-blue">
@@ -53,7 +68,7 @@ const Navbar = ({ toggleSidebar }) => {
               title="Logout"
             >
               <LogOut size={16} />
-              <span>Logout</span>
+              <span>{t('navbar.logout')}</span>
             </button>
           </div>
         </div>
