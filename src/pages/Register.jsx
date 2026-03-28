@@ -162,24 +162,32 @@ const Register = () => {
     }, 1000);
   };
 
-  const handleSendOTP = () => {
+  const handleSendOTP = async () => {
     setIsLoading(true);
-    // Simulate API: sendOTP()
-    setTimeout(() => {
+    try {
+      await authService.sendOtp(formData.mobile);
       setOtpSent(true);
-      setTimer(30);
+      setTimer(300); // 5 minutes timer to map with backend expiration
+    } catch (error) {
+      console.error("Failed to send OTP", error);
+      alert(error.response?.data?.message || "Failed to send OTP. Please try again.");
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
-  const handleVerifyOTP = () => {
+  const handleVerifyOTP = async () => {
     if (otpValue.length === 6) {
       setIsLoading(true);
-      // Simulate API: verifyOTP()
-      setTimeout(() => {
+      try {
+        await authService.verifyOtp(formData.mobile, otpValue);
         setOtpVerified(true);
+      } catch (error) {
+        console.error("OTP Verification Failed", error);
+        alert(error.response?.data?.message || "Invalid or expired OTP. Please try again.");
+      } finally {
         setIsLoading(false);
-      }, 1500);
+      }
     }
   };
 

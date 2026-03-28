@@ -29,6 +29,14 @@ export const authService = {
   login: async (credentials) => {
     const response = await api.post('/auth/login', credentials);
     return response.data;
+  },
+  sendOtp: async (mobileNumber) => {
+    const response = await api.post('/auth/send-otp', { mobileNumber });
+    return response.data;
+  },
+  verifyOtp: async (mobileNumber, otp) => {
+    const response = await api.post('/auth/verify-otp', { mobileNumber, otp });
+    return response.data;
   }
 };
 
