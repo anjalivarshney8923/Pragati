@@ -15,7 +15,7 @@ import Button from '../components/Button';
 import Stepper from '../components/Stepper';
 import Loader from '../components/Loader';
 import FileUpload from '../components/FileUpload';
-import FaceCapture from '../components/FaceCapture';
+import FaceVerification from '../components/FaceVerification';
 import OTPInput from '../components/OTPInput';
 
 const STEPS = [
@@ -52,7 +52,7 @@ const Register = () => {
 
   const navigate = useNavigate();
 
-  const { register, handleSubmit, formState: { errors }, trigger, watch } = useForm({
+  const { register, handleSubmit, formState: { errors }, trigger, watch, setValue } = useForm({
     mode: 'onTouched'
   });
 
@@ -128,27 +128,43 @@ const Register = () => {
   const handleAadhaarUpload = () => {
     if (aadhaarFile) {
       setIsLoading(true);
-      // Simulate API: uploadAadhaarImage(formData)
-      setTimeout(() => {
-        setAadhaarVerified(true);
-        setIsLoading(false);
-      }, 1500);
+      // Upload Aadhaar and try to extract DOB from the uploaded image
+      (async () => {
+        try {
+          const fd = new FormData();
+          fd.append('aadhaar', aadhaarFile);
+          // call OCR endpoint to extract DOB
+          const res = await fetch('http://127.0.0.1:5000/extract_dob', { method: 'POST', body: fd });
+          if (res.ok) {
+            const data = await res.json();
+            if (data && data.dob) {
+              // autofill the DOB field in the form for step 5
+              setValue('dob', data.dob);
+            }
+          }
+          // Simulate server-side upload/verification success
+          setTimeout(() => {
+            setAadhaarVerified(true);
+            setIsLoading(false);
+          }, 800);
+        } catch (err) {
+          console.error('Aadhaar upload / DOB extraction failed', err);
+          setAadhaarVerified(true); // still allow progression; user can retry DOB in next step
+          setIsLoading(false);
+        }
+      })();
     }
   };
 
-  const handleFaceCaptureSubmit = (imageUrl) => {
-    console.log("Captured Image:", imageUrl);
+ const handleFaceCaptureSubmit = (imageFile) => {
+  console.log("Verified Face File:", imageFile);
 
-    setFaceImage(imageUrl);
+  setFaceImage(imageFile);
+  setFaceVerified(true);
 
-    if (!imageUrl) {
-      setFaceVerified(false);
-      return;
-    }
-
-    // Instantly verify in frontend as mock
-    setFaceVerified(true);
-  };
+  // 🔥 MOVE TO NEXT STEP (Age Check)
+  setCurrentStep(5);
+};
 
 
   const handleAgeVerify = () => {
@@ -196,9 +212,9 @@ const Register = () => {
         aadhaarNumber: "123456789012" // Fulfills validation since the UI only uploads image
       };
       console.log('Sending Registration Payload:', finalPayload);
-      
+
       const response = await authService.register(finalPayload);
-      
+
       if (response.token) {
         localStorage.setItem('token', response.token);
       }
@@ -331,9 +347,11 @@ const Register = () => {
                   <h3 className="text-2xl font-bold text-slate-800">Face Verification</h3>
                   <p className="text-slate-500 mb-6">Capture a live photo to confirm liveness against UIDAI records.</p>
 
-                  <FaceCapture
+                  <FaceVerification
                     onCapture={handleFaceCaptureSubmit}
-                    existingImage={faceImage}
+                    aadhaarFile={aadhaarFile}
+                    aadhaarPreview={aadhaarPreview}
+                    aadhaarVerified={aadhaarVerified}
                   />
                 </motion.div>
               )}
@@ -486,13 +504,18 @@ const Register = () => {
               )}
 
               {currentStep < 7 ? (
-                <Button
-                  onClick={handleNext}
-                  variant="primary"
-                  className="px-8 py-3 flex items-center rounded-full shadow-[0_4px_14px_0_rgba(30,58,138,0.39)] hover:shadow-lg font-bold hover:-translate-y-0.5"
-                >
-                  Continue <ChevronRight className="w-5 h-5 ml-1" />
-                </Button>
+                // Hide the global Continue button on the Face Scan step (step 4)
+                currentStep === 4 ? (
+                  <div />
+                ) : (
+                  <Button
+                    onClick={handleNext}
+                    variant="primary"
+                    className="px-8 py-3 flex items-center rounded-full shadow-[0_4px_14px_0_rgba(30,58,138,0.39)] hover:shadow-lg font-bold hover:-translate-y-0.5"
+                  >
+                    Continue <ChevronRight className="w-5 h-5 ml-1" />
+                  </Button>
+                )
               ) : (
                 <Button
                   type="button"

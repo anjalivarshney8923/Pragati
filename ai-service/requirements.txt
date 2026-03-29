@@ -1,0 +1,5 @@
+flask
+flask-cors
+face_recognition
+
+# Note: face_recognition requires dlib and CMake; install system deps first.

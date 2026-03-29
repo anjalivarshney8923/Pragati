@@ -27,6 +27,7 @@ const LandingPage = () => {
         <Initiatives />
         <Testimonials />
         <CTA />
+        {/* FaceVerification removed from landing/contact area per request */}
       </main>
       <Footer />
     </div>

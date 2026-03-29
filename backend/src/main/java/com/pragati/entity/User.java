@@ -6,6 +6,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "users", uniqueConstraints = {
@@ -41,16 +42,31 @@ public class User {
     private String aadhaarNumber;
 
     @Builder.Default
-    private boolean isAadhaarVerified = false;
+    private boolean aadhaarVerified = false;
 
     @Builder.Default
-    private boolean isFaceVerified = false;
+    private boolean faceVerified = false;
 
     private Integer age;
 
     @Enumerated(EnumType.STRING)
     @Builder.Default
     private Role role = Role.USER;
+
+    @Lob
+    private byte[] aadhaarImage;
+
+    private String aadhaarImageContentType;
+
+    @Lob
+    private byte[] selfieImage;
+
+    private String selfieImageContentType;
+
+    private LocalDate dateOfBirth;
+
+    @Builder.Default
+    private boolean dobVerified = false;
 
     @CreationTimestamp
     @Column(updatable = false)
