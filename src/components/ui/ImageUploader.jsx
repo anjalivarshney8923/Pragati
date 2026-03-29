@@ -1,7 +1,9 @@
 import React, { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Camera, Image as ImageIcon, X, AlertCircle } from 'lucide-react';
 
 const ImageUploader = ({ onChange, maxImages = 3 }) => {
+  const { t } = useTranslation();
   const [images, setImages] = useState([]);
   const [error, setError] = useState('');
   
@@ -12,7 +14,7 @@ const ImageUploader = ({ onChange, maxImages = 3 }) => {
     const files = Array.from(e.target.files);
     
     if (images.length + files.length > maxImages) {
-      setError(`You can only upload up to ${maxImages} images.`);
+      setError(t('raiseComplaint.maxImagesError', { max: maxImages }));
       return;
     }
     
@@ -44,12 +46,12 @@ const ImageUploader = ({ onChange, maxImages = 3 }) => {
     <div className="w-full space-y-4">
       <div className="flex flex-col space-y-2">
         <label className="block text-sm font-semibold text-slate-700 flex items-center justify-between">
-          <span>Upload Evidence</span>
+          <span>{t('raiseComplaint.uploadEvidence')}</span>
           <span className="text-xs font-normal text-slate-500">
-            {images.length}/{maxImages} images
+            {t('raiseComplaint.imagesCount', { count: images.length, max: maxImages })}
           </span>
         </label>
-        <p className="text-sm text-slate-500">Upload clear images for faster resolution</p>
+        <p className="text-sm text-slate-500">{t('raiseComplaint.uploadClearImages')}</p>
       </div>
 
       {images.length < maxImages && (
@@ -60,7 +62,7 @@ const ImageUploader = ({ onChange, maxImages = 3 }) => {
             className="flex flex-col items-center justify-center p-6 border-2 border-slate-200 border-dashed rounded-xl cursor-pointer hover:bg-slate-50 hover:border-gov-blue transition-colors group"
           >
             <Camera className="w-8 h-8 text-slate-400 group-hover:text-gov-blue mb-2 transition-colors" />
-            <span className="text-sm font-semibold text-slate-700 group-hover:text-gov-blue">Capture Photo</span>
+            <span className="text-sm font-semibold text-slate-700 group-hover:text-gov-blue">{t('raiseComplaint.capturePhoto')}</span>
             <input 
               ref={cameraInputRef}
               type="file" 
@@ -78,7 +80,7 @@ const ImageUploader = ({ onChange, maxImages = 3 }) => {
             className="flex flex-col items-center justify-center p-6 border-2 border-slate-200 border-dashed rounded-xl cursor-pointer hover:bg-slate-50 hover:border-gov-blue transition-colors group"
           >
             <ImageIcon className="w-8 h-8 text-slate-400 group-hover:text-gov-blue mb-2 transition-colors" />
-            <span className="text-sm font-semibold text-slate-700 group-hover:text-gov-blue">Upload from Gallery</span>
+            <span className="text-sm font-semibold text-slate-700 group-hover:text-gov-blue">{t('raiseComplaint.uploadFromGallery')}</span>
             <input 
               ref={fileInputRef}
               type="file" 

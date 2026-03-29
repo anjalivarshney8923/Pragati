@@ -44,7 +44,8 @@ public class SecurityConfig {
                 .requestMatchers(
                         "/api/auth/**",
                         "/h2-console/**",
-                        "/error"
+                        "/error",
+                        "/uploads/**"
                 ).permitAll()
 
                 // ✅ ALL OTHER REQUESTS NEED AUTH

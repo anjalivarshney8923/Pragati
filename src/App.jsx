@@ -7,6 +7,7 @@ import Register from './pages/Register';
 import DashboardLayout from './components/dashboard/DashboardLayout';
 import DashboardOverview from './pages/dashboard/DashboardOverview';
 import RaiseComplaint from './pages/dashboard/RaiseComplaint';
+import MyComplaints from './pages/dashboard/MyComplaints';
 import VillageFunds from './pages/dashboard/VillageFunds';
 import Expenditure from './pages/dashboard/Expenditure';
 
@@ -32,7 +33,7 @@ function App() {
           <Route element={<DashboardLayout />}>
             <Route path="/dashboard" element={<DashboardOverview />} />
             <Route path="/complaint" element={<RaiseComplaint />} />
-            <Route path="/dashboard/complaints" element={<Placeholder title="My Complaints" />} />
+            <Route path="/dashboard/complaints" element={<MyComplaints />} />
             <Route path="/dashboard/funds" element={<VillageFunds />} />
             <Route path="/dashboard/expenditure" element={<Expenditure />} />
             <Route path="/dashboard/schemes" element={<Placeholder title="Government Schemes" />} />

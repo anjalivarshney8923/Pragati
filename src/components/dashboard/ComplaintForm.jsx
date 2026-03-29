@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { MapPin, Navigation, Trash2, CheckCircle2 } from 'lucide-react';
+import { complaintService } from '../../services/api';
 import InputField from '../ui/InputField';
 import TextArea from '../ui/TextArea';
 import SelectDropdown from '../ui/SelectDropdown';
@@ -8,6 +11,7 @@ import Button from '../Button';
 import AlertBox from '../ui/AlertBox';
 
 const ComplaintForm = () => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     title: '',
     category: '',
@@ -17,13 +21,17 @@ const ComplaintForm = () => {
   const [images, setImages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [coordinates, setCoordinates] = useState({ lat: null, lng: null });
+  const [isFetchingLocation, setIsFetchingLocation] = useState(false);
+  const [locationError, setLocationError] = useState('');
+  const navigate = useNavigate();
 
   const categories = [
-    { label: 'Water', value: 'water' },
-    { label: 'Electricity', value: 'electricity' },
-    { label: 'Roads', value: 'roads' },
-    { label: 'Sanitation', value: 'sanitation' },
-    { label: 'Others', value: 'others' },
+    { label: t('raiseComplaint.categories.water'), value: 'water' },
+    { label: t('raiseComplaint.categories.electricity'), value: 'electricity' },
+    { label: t('raiseComplaint.categories.roads'), value: 'roads' },
+    { label: t('raiseComplaint.categories.sanitation'), value: 'sanitation' },
+    { label: t('raiseComplaint.categories.others'), value: 'others' },
   ];
 
   const handleInputChange = (e) => {
@@ -39,43 +47,94 @@ const ComplaintForm = () => {
       location: '',
     });
     setImages([]);
+    setCoordinates({ lat: null, lng: null });
+    setLocationError('');
   };
 
   const handleLocationClick = () => {
-    if (navigator.geolocation) {
-      // Just simulate for UI
-      setFormData(prev => ({ ...prev, location: 'Lat: 28.6139, Lng: 77.2090 (Simulated)' }));
+    if (!navigator.geolocation) {
+      setLocationError(t('raiseComplaint.locationNotSupported'));
+      return;
     }
+
+    setIsFetchingLocation(true);
+    setLocationError('');
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        setCoordinates({ lat: latitude, lng: longitude });
+
+        try {
+          // Reverse geocoding using OpenStreetMap Nominatim API
+          const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+          const data = await response.json();
+          if (data && data.display_name) {
+             setFormData(prev => ({ ...prev, location: data.display_name }));
+          } else {
+             setFormData(prev => ({ ...prev, location: `Lat: ${latitude}, Lng: ${longitude}` }));
+          }
+        } catch (error) {
+          console.error("Error reverse geocoding:", error);
+          setFormData(prev => ({ ...prev, location: `Lat: ${latitude}, Lng: ${longitude}` }));
+        }
+        setIsFetchingLocation(false);
+      },
+      (error) => {
+        setIsFetchingLocation(false);
+        if (error.code === error.PERMISSION_DENIED) {
+          setLocationError(t('raiseComplaint.locationPermissionDenied'));
+        } else {
+          setLocationError(t('raiseComplaint.locationFetchFailed'));
+        }
+      }
+    );
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     
-    // Log form data to console
-    const submittedData = {
-      ...formData,
-      images: images.map(img => img.file.name)
-    };
-    console.log("Complaint Submitted: ", submittedData);
-    
-    // Simulate submission
-    setTimeout(() => {
+    try {
+      const payload = new FormData();
+      payload.append('title', formData.title);
+      payload.append('category', formData.category);
+      payload.append('description', formData.description);
+      payload.append('location', formData.location);
+      if (coordinates.lat) payload.append('latitude', coordinates.lat);
+      if (coordinates.lng) payload.append('longitude', coordinates.lng);
+
+      if (images && images.length > 0 && images[0].file) {
+        // Just upload the first image as backend accepts single MultipartFile
+        payload.append('image', images[0].file);
+      }
+
+      await complaintService.createComplaint(payload);
+
       setIsLoading(false);
       setSubmitted(true);
-    }, 1500);
+      
+      setTimeout(() => {
+        navigate('/my-complaints');
+      }, 2500);
+
+    } catch (error) {
+      console.error("Complaint Submission Failed: ", error);
+      alert(error.response?.data?.message || t('raiseComplaint.failedToSubmit'));
+      setIsLoading(false);
+    }
   };
 
   if (submitted) {
     return (
       <div className="flex flex-col items-center justify-center py-12 px-4 text-center space-y-4">
         <CheckCircle2 size={64} className="text-green-500 mb-2" />
-        <h3 className="text-2xl font-bold text-slate-800 tracking-tight">Complaint Submitted</h3>
+        <h3 className="text-2xl font-bold text-slate-800 tracking-tight">{t('raiseComplaint.submittedTitle')}</h3>
         <p className="text-slate-600 max-w-sm mb-6">
-          Your complaint has been successfully registered on the portal. An assigned officer will review it shortly.
+          {t('raiseComplaint.submittedDesc')}
         </p>
         <Button onClick={() => { setSubmitted(false); clearForm(); }} variant="outline">
-          Raise Another Complaint
+          {t('raiseComplaint.raiseAnother')}
         </Button>
       </div>
     );
@@ -87,25 +146,25 @@ const ComplaintForm = () => {
     <form onSubmit={handleSubmit} className="space-y-8">
       
       <AlertBox type="secure" className="mb-2">
-        <span className="font-semibold text-slate-800 block mb-1">Anonymity Notice</span>
-        This complaint is completely anonymous. Your identity will not be shared with anyone.
+        <span className="font-semibold text-slate-800 block mb-1">{t('raiseComplaint.anonymityTitle')}</span>
+        {t('raiseComplaint.anonymityNotice')}
       </AlertBox>
 
       <div className="space-y-6">
         <InputField 
           id="title" 
-          label="Complaint Title" 
+          label={t('raiseComplaint.complaintTitle')} 
           required 
-          placeholder="E.g., Broken water pipe near main square" 
+          placeholder={t('raiseComplaint.complaintTitlePlaceholder')} 
           value={formData.title}
           onChange={handleInputChange}
         />
 
         <SelectDropdown 
           id="category"
-          label="Category"
+          label={t('raiseComplaint.category')}
           required
-          placeholder="Select a category"
+          placeholder={t('raiseComplaint.categoryPlaceholder')}
           options={categories}
           value={formData.category}
           onChange={handleInputChange}
@@ -113,17 +172,17 @@ const ComplaintForm = () => {
 
         <TextArea 
           id="description"
-          label="Description"
+          label={t('raiseComplaint.description')}
           required
           rows={4}
-          placeholder="Please provide specific details about the issue..."
+          placeholder={t('raiseComplaint.descriptionPlaceholder')}
           value={formData.description}
           onChange={handleInputChange}
         />
 
         <div className="w-full">
           <label htmlFor="location" className="block text-sm font-semibold text-slate-700 mb-2">
-            Location (Optional)
+            {t('raiseComplaint.location')}
           </label>
           <div className="flex gap-3">
             <div className="relative flex-grow">
@@ -134,19 +193,22 @@ const ComplaintForm = () => {
                 type="text"
                 id="location"
                 className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-gov-blue/20 focus:border-gov-blue outline-none transition-all placeholder:text-slate-400 bg-white shadow-sm"
-                placeholder="Enter landmark or location area"
+                placeholder={t('raiseComplaint.locationPlaceholder')}
                 value={formData.location}
                 onChange={handleInputChange}
               />
             </div>
-            <Button type="button" variant="outline" onClick={handleLocationClick} className="flex-shrink-0 px-4 whitespace-nowrap hidden sm:flex">
-              <Navigation size={18} className="mr-2" />
-              Use Current Location
+            <Button type="button" variant="outline" onClick={handleLocationClick} disabled={isFetchingLocation} className="flex-shrink-0 px-4 whitespace-nowrap hidden sm:flex">
+              <Navigation size={18} className={`mr-2 ${isFetchingLocation ? 'animate-pulse text-gov-blue' : ''}`} />
+              {isFetchingLocation ? t('raiseComplaint.fetchingLocation') : t('raiseComplaint.useCurrentLocation')}
             </Button>
-            <Button type="button" variant="outline" onClick={handleLocationClick} className="flex-shrink-0 px-4 sm:hidden">
-              <Navigation size={18} />
+            <Button type="button" variant="outline" onClick={handleLocationClick} disabled={isFetchingLocation} className="flex-shrink-0 px-4 sm:hidden">
+              <Navigation size={18} className={isFetchingLocation ? 'animate-pulse text-gov-blue' : ''} />
             </Button>
           </div>
+          {locationError && (
+            <p className="text-red-500 text-xs font-medium mt-1">{locationError}</p>
+          )}
         </div>
 
         <div className="pt-2">
@@ -162,7 +224,7 @@ const ComplaintForm = () => {
           className="text-slate-500 hover:text-slate-700 hover:bg-slate-100"
         >
           <Trash2 size={18} className="mr-2" />
-          Clear Form
+          {t('raiseComplaint.clearForm')}
         </Button>
         <Button 
           type="submit" 
@@ -171,7 +233,7 @@ const ComplaintForm = () => {
           isLoading={isLoading}
           className="w-full sm:w-auto px-8"
         >
-          Submit Complaint
+          {t('raiseComplaint.submitComplaint')}
         </Button>
       </div>
     </form>

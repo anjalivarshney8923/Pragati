@@ -40,4 +40,27 @@ export const authService = {
   }
 };
 
+export const complaintService = {
+  createComplaint: async (complaintData) => {
+    const response = await api.post('/complaints', complaintData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+  getMyComplaints: async () => {
+    const response = await api.get('/complaints/my');
+    return response.data;
+  },
+  getAllComplaints: async () => {
+    const response = await api.get('/complaints');
+    return response.data;
+  },
+  updateStatus: async (id, status) => {
+    const response = await api.put(`/complaints/${id}/status`, { status });
+    return response.data;
+  }
+};
+
 export default api;
