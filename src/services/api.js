@@ -29,6 +29,37 @@ export const authService = {
   login: async (credentials) => {
     const response = await api.post('/auth/login', credentials);
     return response.data;
+  },
+  sendOtp: async (mobileNumber) => {
+    const response = await api.post('/auth/send-otp', { mobileNumber });
+    return response.data;
+  },
+  verifyOtp: async (mobileNumber, otp) => {
+    const response = await api.post('/auth/verify-otp', { mobileNumber, otp });
+    return response.data;
+  }
+};
+
+export const complaintService = {
+  createComplaint: async (complaintData) => {
+    const response = await api.post('/complaints', complaintData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+  getMyComplaints: async () => {
+    const response = await api.get('/complaints/my');
+    return response.data;
+  },
+  getAllComplaints: async () => {
+    const response = await api.get('/complaints');
+    return response.data;
+  },
+  updateStatus: async (id, status) => {
+    const response = await api.put(`/complaints/${id}/status`, { status });
+    return response.data;
   }
 };
 
