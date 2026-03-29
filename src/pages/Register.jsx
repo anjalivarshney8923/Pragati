@@ -527,13 +527,6 @@ const Register = () => {
                     Continue <ChevronRight className="w-5 h-5 ml-1" />
                   </Button>
                 )
-                <Button
-                  onClick={handleNext}
-                  variant="primary"
-                  className="px-8 py-3 flex items-center rounded-full shadow-[0_4px_14px_0_rgba(30,58,138,0.39)] hover:shadow-lg font-bold hover:-translate-y-0.5"
-                >
-                  {t('register.continueBtn')} <ChevronRight className="w-5 h-5 ml-1" />
-                </Button>
               ) : (
                 <Button
                   type="button"
