@@ -22,6 +22,7 @@ api.interceptors.request.use(
 );
 
 export const authService = {
+  // Villager Auth
   register: async (userData) => {
     const response = await api.post('/auth/register', userData);
     return response.data;
@@ -30,12 +31,18 @@ export const authService = {
     const response = await api.post('/auth/login', credentials);
     return response.data;
   },
-  sendOtp: async (mobileNumber) => {
-    const response = await api.post('/auth/send-otp', { mobileNumber });
+
+  // Officer Auth (Governance Portal)
+  registerOfficer: async (formData) => {
+    const response = await api.post('/auth/register-officer', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     return response.data;
   },
-  verifyOtp: async (mobileNumber, otp) => {
-    const response = await api.post('/auth/verify-otp', { mobileNumber, otp });
+  loginOfficer: async (credentials) => {
+    const response = await api.post('/auth/login-officer', credentials);
     return response.data;
   }
 };
@@ -55,10 +62,6 @@ export const complaintService = {
   },
   getAllComplaints: async () => {
     const response = await api.get('/complaints');
-    return response.data;
-  },
-  updateStatus: async (id, status) => {
-    const response = await api.put(`/complaints/${id}/status`, { status });
     return response.data;
   }
 };

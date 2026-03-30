@@ -26,6 +26,3 @@ jwt:
 server:
   port: 8080
 
-fast2sms:
-  api:
-    key: ${FAST2SMS_API_KEY:o5DZxgOAIpT6Ck2udYv39NmHX8hVEPeWjRqysa1GMfcQti0KF4DhUzmuvBQw48sWbHI6tLdcoEglJCAk}

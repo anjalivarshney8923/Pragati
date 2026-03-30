@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaGlobe, FaSearch, FaBars, FaTimes, FaFont } from 'react-icons/fa';
 import { MdOutlineAccessibleForward } from 'react-icons/md';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
 const TopUtilityBar = () => {
   const { i18n } = useTranslation();
-  
+
   const toggleLanguage = () => {
     const newLang = i18n.language === 'en' ? 'hi' : 'en';
     i18n.changeLanguage(newLang);
@@ -41,7 +41,7 @@ const TopUtilityBar = () => {
             <button className="px-1 text-xs hover:text-[#FF9933]">A</button>
             <button className="px-1 text-sm hover:text-[#FF9933]">A+</button>
           </div>
-          <button 
+          <button
             onClick={toggleLanguage}
             className="hover:text-[#FF9933] transition-colors flex items-center gap-1 font-semibold border border-white/40 px-2 py-0.5 rounded text-[10px]"
           >
@@ -55,13 +55,14 @@ const TopUtilityBar = () => {
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
   const menuItems = ['Home', 'About', 'Features', 'Transparency', 'How It Works', 'Portals', 'Contact'];
 
   return (
     <header className="fixed w-full top-0 z-40 bg-white shadow-md flex flex-col">
       <TopUtilityBar />
       <nav className="flex justify-between items-center px-4 md:px-8 py-3 bg-white" aria-label="Main Navigation">
-        
+
         {/* Logo */}
         <div className="flex items-center gap-2 cursor-pointer">
           <div className="w-10 h-10 rounded-full bg-[#FF9933] flex items-center justify-center p-1 relative overflow-hidden">
@@ -90,7 +91,10 @@ const Navbar = () => {
           <Link to="/register" className="border-2 border-[#1E3A8A] text-[#1E3A8A] px-4 py-2 rounded-md text-sm font-semibold hover:bg-[#1E3A8A] hover:text-white transition-all shadow-sm flex items-center justify-center">
             Villager Portal
           </Link>
-          <button className="bg-gradient-to-r from-[#FF9933] to-[#e68a2e] text-white px-4 py-2 rounded-md text-sm font-semibold hover:shadow-lg transition-all shadow-md">
+          <button
+            onClick={() => navigate('/officer-login')}
+            className="bg-gradient-to-r from-[#1E3A8A] to-[#1E3A8A] text-white px-4 py-2 rounded-md text-sm font-semibold hover:shadow-lg transition-all shadow-md"
+          >
             Governance Portal
           </button>
         </div>
@@ -107,7 +111,7 @@ const Navbar = () => {
       {/* Mobile Menu Overlay */}
       <AnimatePresence>
         {isOpen && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
@@ -116,9 +120,9 @@ const Navbar = () => {
             <ul className="flex flex-col py-4 px-6 space-y-4">
               {menuItems.map((item, index) => (
                 <li key={index}>
-                  <a href={`#${item.toLowerCase().replace(/\s/g, '-')}`} 
-                     className="block text-base font-medium text-gray-800 hover:text-[#FF9933]"
-                     onClick={() => setIsOpen(false)}
+                  <a href={`#${item.toLowerCase().replace(/\s/g, '-')}`}
+                    className="block text-base font-medium text-gray-800 hover:text-[#FF9933]"
+                    onClick={() => setIsOpen(false)}
                   >
                     {item}
                   </a>
@@ -126,7 +130,12 @@ const Navbar = () => {
               ))}
               <div className="pt-4 flex flex-col gap-3">
                 <Link to="/register" className="w-full border-2 border-[#1E3A8A] text-[#1E3A8A] py-2 rounded-md font-semibold text-center block">Villager Portal</Link>
-                <button className="w-full bg-[#FF9933] text-white py-2 rounded-md font-semibold text-center mt-2">Governance Portal</button>
+                <button 
+                  onClick={() => { navigate('/officer-login'); setIsOpen(false); }}
+                  className="w-full bg-[#1E3A8A] text-white py-2 rounded-md font-semibold text-center mt-2"
+                >
+                  Governance Portal
+                </button>
               </div>
             </ul>
           </motion.div>

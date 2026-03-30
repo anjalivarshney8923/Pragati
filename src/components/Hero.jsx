@@ -58,10 +58,10 @@ const Hero = () => {
               transition={{ delay: 0.8, duration: 0.6 }}
               className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4"
             >
-              <button className="w-full sm:w-auto px-8 py-3.5 bg-[#1E3A8A] text-white font-semibold rounded-lg hover:bg-blue-900 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 group">
-                {t('hero.explore')}
+              <Link to="/officer-login" className="w-full sm:w-auto px-8 py-3.5 bg-[#1E3A8A] text-white font-semibold rounded-lg hover:bg-blue-900 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 group">
+                {t('common.governancePortal') || 'Governance Portal'}
                 <FaArrowRight className="group-hover:translate-x-1 transition-transform" />
-              </button>
+              </Link>
               <Link to="/register" className="w-full sm:w-auto px-8 py-3.5 bg-white text-[#1E3A8A] font-semibold rounded-lg border-2 border-[#1E3A8A] hover:bg-gray-50 transition-all shadow-sm flex items-center justify-center">
                 {t('hero.accessPortal')}
               </Link>

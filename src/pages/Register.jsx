@@ -4,6 +4,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { authService } from '../services/api';
+import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
+import { auth } from '../config/firebase';
 import {
   Building2, User, Phone, Mail, Lock,
   MapPin, CheckCircle, Calendar,
@@ -52,6 +54,7 @@ const Register = () => {
   const [otpValue, setOtpValue] = useState('');
   const [timer, setTimer] = useState(0);
   const [otpVerified, setOtpVerified] = useState(false);
+  const [confirmationResult, setConfirmationResult] = useState(null);
 
   const navigate = useNavigate();
 
@@ -159,15 +162,15 @@ const Register = () => {
     }
   };
 
- const handleFaceCaptureSubmit = (imageFile) => {
-  console.log("Verified Face File:", imageFile);
+  const handleFaceCaptureSubmit = (imageFile) => {
+    console.log("Verified Face File:", imageFile);
 
-  setFaceImage(imageFile);
-  setFaceVerified(true);
+    setFaceImage(imageFile);
+    setFaceVerified(true);
 
-  // 🔥 MOVE TO NEXT STEP (Age Check)
-  setCurrentStep(5);
-};
+    // 🔥 MOVE TO NEXT STEP (Age Check)
+    setCurrentStep(5);
+  };
 
 
   const handleAgeVerify = () => {
@@ -178,35 +181,77 @@ const Register = () => {
     }, 1000);
   };
 
+  const setupRecaptcha = () => {
+    if (window.recaptchaVerifier) {
+      window.recaptchaVerifier.clear();
+    }
+
+    window.recaptchaVerifier = new RecaptchaVerifier(
+      auth,
+      'recaptcha-container',
+      {
+        size: 'normal',
+        callback: (response) => {
+          console.log("reCAPTCHA solved:", response);
+        },
+        'expired-callback': () => {
+          console.warn("reCAPTCHA expired");
+        }
+      }
+    );
+  };
+
   const handleSendOTP = async () => {
     setIsLoading(true);
     try {
-      await authService.sendOtp(formData.mobile);
+      setupRecaptcha();
+
+      const phoneNumber = "+91" + formData.mobile;
+      const appVerifier = window.recaptchaVerifier;
+
+      const confirmation = await signInWithPhoneNumber(
+        auth,
+        phoneNumber,
+        appVerifier
+      );
+
+      setConfirmationResult(confirmation);
       setOtpSent(true);
-      setTimer(300); // 5 minutes timer to map with backend expiration
+      setTimer(60);
+
+      console.log("OTP sent successfully ✅");
+
     } catch (error) {
-      console.error("Failed to send OTP", error);
-      alert(error.response?.data?.message || "Failed to send OTP. Please try again.");
+      console.error("Failed to send OTP via Firebase", error);
+
+      alert("Failed to send OTP: " + error.message);
+
+      if (window.recaptchaVerifier) {
+        window.recaptchaVerifier.clear();
+      }
+
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleVerifyOTP = async () => {
-    if (otpValue.length === 6) {
+    if (otpValue.length === 6 && confirmationResult) {
       setIsLoading(true);
       try {
-        await authService.verifyOtp(formData.mobile, otpValue);
+        await confirmationResult.confirm(otpValue);
+
         setOtpVerified(true);
+        console.log("OTP verified ✅");
+
       } catch (error) {
-        console.error("OTP Verification Failed", error);
-        alert(error.response?.data?.message || "Invalid or expired OTP. Please try again.");
+        console.error("Firebase OTP Verification Failed", error);
+        alert("Invalid OTP: " + error.message);
       } finally {
         setIsLoading(false);
       }
     }
   };
-
   const onSubmit = async () => {
     setIsLoading(true);
     try {
@@ -404,6 +449,7 @@ const Register = () => {
 
                   {!otpVerified ? (
                     <div className="space-y-6">
+                      <div id="recaptcha-container"></div>
                       <p className="font-semibold text-lg border bg-slate-100 p-3 rounded-lg text-slate-700 shadow-inner">
                         {t('register.registering')} <span className="text-[#1E3A8A] ml-2">+91 {formData.mobile}</span>
                       </p>

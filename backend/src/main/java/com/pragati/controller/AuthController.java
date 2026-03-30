@@ -1,20 +1,14 @@
 package com.pragati.controller;
 
-import com.pragati.dto.LoginRequestDTO;
-import com.pragati.dto.LoginResponseDTO;
-import com.pragati.dto.RegisterRequestDTO;
-import com.pragati.dto.RegisterResponseDTO;
-import com.pragati.dto.OtpRequestDTO;
-import com.pragati.dto.OtpVerifyDTO;
+import com.pragati.dto.*;
 import com.pragati.service.AuthService;
-import com.pragati.service.OtpService;
+import com.pragati.service.OfficerService;
 import jakarta.validation.Valid;
-import java.util.Map;
-import java.util.HashMap;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -22,8 +16,9 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
-    private final OtpService otpService;
+    private final OfficerService officerService;
 
+    // --- Villager Authentication ---
     @PostMapping("/register")
     public ResponseEntity<RegisterResponseDTO> register(@Valid @RequestBody RegisterRequestDTO request) {
         RegisterResponseDTO response = authService.registerUser(request);
@@ -36,26 +31,31 @@ public class AuthController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @PostMapping("/send-otp")
-    public ResponseEntity<Map<String, String>> sendOtp(@Valid @RequestBody OtpRequestDTO request) {
-        otpService.generateAndSendOtp(request.getMobileNumber());
-        
-        Map<String, String> response = new HashMap<>();
-        response.put("message", "OTP sent successfully");
-        return ResponseEntity.ok(response);
+    // --- Officer Authentication (Restricted) ---
+    @PostMapping(value = "/register-officer", consumes = "multipart/form-data")
+    public ResponseEntity<OfficerResponseDTO> registerOfficer(
+            @RequestParam("fullName") String fullName,
+            @RequestParam("email") String email,
+            @RequestParam("mobile") String mobileNumber,
+            @RequestParam("employeeId") String employeeId,
+            @RequestParam("password") String password,
+            @RequestParam("department") String department,
+            @RequestParam("designation") String designation,
+            @RequestParam("state") String state,
+            @RequestParam("district") String district,
+            @RequestParam("govtIdFile") MultipartFile govtIdFile,
+            @RequestParam("appointmentLetterFile") MultipartFile appointmentLetterFile
+    ) {
+        OfficerResponseDTO response = officerService.registerOfficer(
+                fullName, email, mobileNumber, employeeId, password, department, 
+                designation, state, district, govtIdFile, appointmentLetterFile
+        );
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
-    @PostMapping("/verify-otp")
-    public ResponseEntity<Map<String, String>> verifyOtp(@Valid @RequestBody OtpVerifyDTO request) {
-        boolean isValid = otpService.verifyOtp(request.getMobileNumber(), request.getOtp());
-        
-        Map<String, String> response = new HashMap<>();
-        if (isValid) {
-            response.put("message", "OTP verified successfully.");
-            return ResponseEntity.ok(response);
-        } else {
-            response.put("message", "Invalid or expired OTP.");
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-        }
+    @PostMapping("/login-officer")
+    public ResponseEntity<OfficerResponseDTO> loginOfficer(@Valid @RequestBody OfficerLoginRequest request) {
+        OfficerResponseDTO response = officerService.loginOfficer(request);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }

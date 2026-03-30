@@ -107,9 +107,9 @@ const Portals = () => {
               </ul>
             </div>
 
-            <button className="w-full py-4 px-6 bg-white text-[#FF9933] font-bold rounded-xl hover:bg-gray-50 transition-all shadow-md group-hover:shadow-lg flex justify-center items-center gap-2">
+            <Link to="/officer-login" className="w-full py-4 px-6 bg-white text-[#FF9933] font-bold rounded-xl hover:bg-gray-50 transition-all shadow-md group-hover:shadow-lg flex justify-center items-center gap-2">
               Enter Governance Portal <FaArrowRight />
-            </button>
+            </Link>
           </motion.div>
           
         </div>

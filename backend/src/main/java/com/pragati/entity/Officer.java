@@ -6,17 +6,14 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
-import java.time.LocalDate;
 
 @Entity
-@Table(name = "users", uniqueConstraints = {
-    @UniqueConstraint(columnNames = "mobileNumber")
-})
+@Table(name = "officers")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class User {
+public class Officer {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,48 +22,33 @@ public class User {
     @Column(nullable = false)
     private String fullName;
 
-    @Column(unique = true, nullable = false, length = 15)
+    @Column(unique = true, nullable = false)
+    private String email;
+
+    @Column(nullable = false)
     private String mobileNumber;
 
-    private String email;
+    @Column(unique = true, nullable = false)
+    private String employeeId;
 
     @Column(nullable = false)
     private String password;
 
+    private String department;
+    private String designation;
     private String state;
     private String district;
-    private String village;
-    private String panchayat;
 
-    @Column(length = 12)
-    private String aadhaarNumber;
-
-    @Builder.Default
-    private Boolean aadhaarVerified = false;
-
-    @Builder.Default
-    private Boolean faceVerified = false;
-
-    private Integer age;
+    private String govtIdFilePath;
+    private String appointmentLetterFilePath;
 
     @Enumerated(EnumType.STRING)
     @Builder.Default
-    private Role role = Role.USER;
+    private OfficerRole role = OfficerRole.OFFICER;
 
-    @Lob
-    private byte[] aadhaarImage;
-
-    private String aadhaarImageContentType;
-
-    @Lob
-    private byte[] selfieImage;
-
-    private String selfieImageContentType;
-
-    private LocalDate dateOfBirth;
-
+    @Enumerated(EnumType.STRING)
     @Builder.Default
-    private Boolean dobVerified = false;
+    private OfficerStatus status = OfficerStatus.PENDING;
 
     @CreationTimestamp
     @Column(updatable = false)

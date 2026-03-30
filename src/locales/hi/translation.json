@@ -179,5 +179,8 @@
     "locationNotSupported": "आपका ब्राउज़र जियोलोकेशन का समर्थन नहीं करता है",
     "locationPermissionDenied": "स्थान की अनुमति अस्वीकार कर दी गई।",
     "locationFetchFailed": "स्थान प्राप्त करने में विफल।"
+  },
+  "common": {
+    "governancePortal": "गवर्नेंस पोर्टल"
   }
 }

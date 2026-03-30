@@ -2,6 +2,9 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import OfficerLogin from './pages/OfficerLogin';
+import OfficerRegister from './pages/OfficerRegister';
+
 
 // Dashboard Components
 import DashboardLayout from './components/dashboard/DashboardLayout';
@@ -29,9 +32,12 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          
+          <Route path="/officer-login" element={<OfficerLogin />} />
+          <Route path="/officer-register" element={<OfficerRegister />} />
+
           <Route element={<DashboardLayout />}>
             <Route path="/dashboard" element={<DashboardOverview />} />
+            <Route path="/governance-dashboard" element={<DashboardOverview />} />
             <Route path="/complaint" element={<RaiseComplaint />} />
             <Route path="/dashboard/complaints" element={<MyComplaints />} />
             <Route path="/dashboard/funds" element={<VillageFunds />} />
