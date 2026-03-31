@@ -63,6 +63,10 @@ export const complaintService = {
   getAllComplaints: async () => {
     const response = await api.get('/complaints');
     return response.data;
+  },
+  getOfficerComplaints: async () => {
+    const response = await api.get('/officer/complaints');
+    return response.data;
   }
 };
 
