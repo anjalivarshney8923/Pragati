@@ -28,3 +28,8 @@ backend/target/
 *.jar
 *.war
 *.class
+
+
+# Environment variables (IMPORTANT)
+.env
+.env.*

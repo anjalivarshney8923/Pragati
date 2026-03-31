@@ -1,18 +1,16 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 
-// Your web app's Firebase configuration
-// Replace these with your actual config from Firebase Console -> Project Settings -> General -> Web App
 const firebaseConfig = {
-  apiKey: "AIzaSyCKHSLjB4U5PZGAXtqQ73GAmks5xlkdv8E",
-  authDomain: "pragati-61ef5.firebaseapp.com",
-  projectId: "pragati-61ef5",
-  storageBucket: "pragati-61ef5.firebasestorage.app",
-  messagingSenderId: "205919504296",
-  appId: "1:205919504296:web:df2aada02e3e7db6bf7f9d",
-  measurementId: "G-ZDBQKG0YMV"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
+
 export const auth = getAuth(app);
