@@ -29,7 +29,7 @@ const OfficerLogin = () => {
       if (response.token) {
         localStorage.setItem('token', response.token);
         localStorage.setItem('officer', JSON.stringify(response));
-        navigate('/governance-dashboard'); 
+        navigate('/governance/overview'); 
       }
     } catch (err) {
       console.error("Login Error:", err);

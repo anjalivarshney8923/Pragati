@@ -14,6 +14,17 @@ import MyComplaints from './pages/dashboard/MyComplaints';
 import VillageFunds from './pages/dashboard/VillageFunds';
 import Expenditure from './pages/dashboard/Expenditure';
 
+// Governance Dashboard Components
+import GovernanceLayout from './layouts/GovernanceLayout';
+import Overview from './pages/governance/Overview';
+import Complaints from './pages/governance/Complaints';
+import Citizens from './pages/governance/Citizens';
+import Approvals from './pages/governance/Approvals';
+import Funds from './pages/governance/Funds';
+import Reports from './pages/governance/Reports';
+import NotificationsBoard from './pages/governance/Notifications';
+import Settings from './pages/governance/Settings';
+
 // Placeholders for undefined pages
 const Placeholder = ({ title }) => (
   <div className="flex items-center justify-center p-12 h-[60vh]">
@@ -37,7 +48,6 @@ function App() {
 
           <Route element={<DashboardLayout />}>
             <Route path="/dashboard" element={<DashboardOverview />} />
-            <Route path="/governance-dashboard" element={<DashboardOverview />} />
             <Route path="/complaint" element={<RaiseComplaint />} />
             <Route path="/dashboard/complaints" element={<MyComplaints />} />
             <Route path="/dashboard/funds" element={<VillageFunds />} />
@@ -45,6 +55,19 @@ function App() {
             <Route path="/dashboard/schemes" element={<Placeholder title="Government Schemes" />} />
             <Route path="/dashboard/notifications" element={<Placeholder title="Notifications" />} />
             <Route path="/dashboard/support" element={<Placeholder title="Help & Support" />} />
+          </Route>
+
+          {/* Governance Dashboard Routes (Restricted) */}
+          <Route path="/governance-dashboard" element={<Overview />} /> {/* Legacy mapping */}
+          <Route path="/governance" element={<GovernanceLayout />}>
+             <Route path="overview" element={<Overview />} />
+             <Route path="complaints" element={<Complaints />} />
+             <Route path="citizens" element={<Citizens />} />
+             <Route path="approvals" element={<Approvals />} />
+             <Route path="funds" element={<Funds />} />
+             <Route path="reports" element={<Reports />} />
+             <Route path="notifications" element={<NotificationsBoard />} />
+             <Route path="settings" element={<Settings />} />
           </Route>
         </Routes>
       </div>
