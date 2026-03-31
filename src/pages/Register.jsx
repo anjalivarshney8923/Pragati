@@ -4,8 +4,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { authService } from '../services/api';
-import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
-import { auth } from '../config/firebase';
+// import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
+// import { auth } from '../config/firebase';
 import {
   Building2, User, Phone, Mail, Lock,
   MapPin, CheckCircle, Calendar,
@@ -49,12 +49,12 @@ const Register = () => {
   // Age state mock
   const [ageVerified, setAgeVerified] = useState(false);
 
-  // OTP State
+  // Mock OTP State
   const [otpSent, setOtpSent] = useState(false);
-  const [otpValue, setOtpValue] = useState('');
+  const [generatedOtp, setGeneratedOtp] = useState("");
+  const [otpValue, setOtpValue] = useState("");
   const [timer, setTimer] = useState(0);
   const [otpVerified, setOtpVerified] = useState(false);
-  const [confirmationResult, setConfirmationResult] = useState(null);
 
   const navigate = useNavigate();
 
@@ -181,75 +181,23 @@ const Register = () => {
     }, 1000);
   };
 
-  const setupRecaptcha = () => {
-    if (window.recaptchaVerifier) {
-      window.recaptchaVerifier.clear();
-    }
+  const handleSendOTP = () => {
+    const otp = "123456"; // mock OTP
+    setGeneratedOtp(otp);
+    setOtpSent(true);
+    setTimer(60);
 
-    window.recaptchaVerifier = new RecaptchaVerifier(
-      auth,
-      'recaptcha-container',
-      {
-        size: 'normal',
-        callback: (response) => {
-          console.log("reCAPTCHA solved:", response);
-        },
-        'expired-callback': () => {
-          console.warn("reCAPTCHA expired");
-        }
-      }
-    );
+    alert("Mock OTP sent: " + otp); // for testing
+    console.log("Mock OTP sent successfully ✅");
   };
 
-  const handleSendOTP = async () => {
-    setIsLoading(true);
-    try {
-      setupRecaptcha();
-
-      const phoneNumber = "+91" + formData.mobile;
-      const appVerifier = window.recaptchaVerifier;
-
-      const confirmation = await signInWithPhoneNumber(
-        auth,
-        phoneNumber,
-        appVerifier
-      );
-
-      setConfirmationResult(confirmation);
-      setOtpSent(true);
-      setTimer(60);
-
-      console.log("OTP sent successfully ✅");
-
-    } catch (error) {
-      console.error("Failed to send OTP via Firebase", error);
-
-      alert("Failed to send OTP: " + error.message);
-
-      if (window.recaptchaVerifier) {
-        window.recaptchaVerifier.clear();
-      }
-
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleVerifyOTP = async () => {
-    if (otpValue.length === 6 && confirmationResult) {
-      setIsLoading(true);
-      try {
-        await confirmationResult.confirm(otpValue);
-
-        setOtpVerified(true);
-        console.log("OTP verified ✅");
-
-      } catch (error) {
-        console.error("Firebase OTP Verification Failed", error);
-        alert("Invalid OTP: " + error.message);
-      } finally {
-        setIsLoading(false);
-      }
+  const handleVerifyOTP = () => {
+    if (otpValue.length === 6) {
+      setOtpVerified(true);
+      alert("OTP Verified Successfully");
+      console.log("Mock OTP verified ✅");
+    } else {
+      alert("Enter valid 6-digit OTP");
     }
   };
   const onSubmit = async () => {
@@ -449,7 +397,6 @@ const Register = () => {
 
                   {!otpVerified ? (
                     <div className="space-y-6">
-                      <div id="recaptcha-container"></div>
                       <p className="font-semibold text-lg border bg-slate-100 p-3 rounded-lg text-slate-700 shadow-inner">
                         {t('register.registering')} <span className="text-[#1E3A8A] ml-2">+91 {formData.mobile}</span>
                       </p>
