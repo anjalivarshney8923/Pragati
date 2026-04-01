@@ -67,6 +67,10 @@ export const complaintService = {
   getOfficerComplaints: async () => {
     const response = await api.get('/officer/complaints');
     return response.data;
+  },
+  updateComplaintStatus: async (id, status) => {
+    const response = await api.put(`/officer/complaints/${id}/status`, { status });
+    return response.data;
   }
 };
 

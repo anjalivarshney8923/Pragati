@@ -1,29 +1,50 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { 
   Search, 
   Users, 
   MapPin, 
   ShieldCheck, 
-  Clock, 
   Download,
   Filter,
-  UserPlus
+  UserPlus,
+  Loader2,
+  AlertCircle
 } from 'lucide-react';
 
-const mockCitizens = [
-  { id: 'CIT-5021', name: 'Anjali Varshney', mobile: '9988776655', village: 'Miranpur', district: 'Ghaziabad', aadhaar: 'XXXX-XXXX-1234', status: 'VERIFIED' },
-  { id: 'CIT-5022', name: 'Saurabh Gupta', mobile: '8877665544', village: 'Jalalabad', district: 'Ghaziabad', aadhaar: 'XXXX-XXXX-5678', status: 'VERIFIED' },
-  { id: 'CIT-5023', name: 'Rahul Sharma', mobile: '7766554433', village: 'Miranpur', district: 'Ghaziabad', aadhaar: 'XXXX-XXXX-9012', status: 'PENDING' },
-  { id: 'CIT-5024', name: 'Priya Verma', mobile: '6655443322', village: 'Hapur', district: 'Hapur', aadhaar: 'XXXX-XXXX-3456', status: 'VERIFIED' },
-  { id: 'CIT-5025', name: 'Amit Kumar', mobile: '5544332211', village: 'Jalalabad', district: 'Ghaziabad', aadhaar: 'XXXX-XXXX-7890', status: 'VERIFIED' },
-];
-
 const Citizens = () => {
+  const [citizens, setCitizens] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const filteredCitizens = mockCitizens.filter(c => 
+  useEffect(() => {
+    fetchCitizens();
+  }, []);
+
+  const fetchCitizens = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await axios.get('http://localhost:8080/api/officer/citizens', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      setCitizens(response.data);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching citizens:', err);
+      setError('Failed to load citizen records. Please ensure you are authorized.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredCitizens = citizens.filter(c => 
     c.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    c.mobile.includes(searchTerm)
+    c.mobile.includes(searchTerm) ||
+    c.id.toString().includes(searchTerm)
   );
 
   return (
@@ -64,11 +85,12 @@ const Citizens = () => {
          </div>
 
          <div className="flex items-center gap-4 z-10">
-            <div className="flex bg-slate-50 p-1.5 rounded-2xl border border-slate-100">
-               <button className="px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-white text-blue-900 shadow-sm border border-slate-200">Village List</button>
-               <button className="px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-slate-800 transition-colors">District Map</button>
-            </div>
-            
+            <button 
+              onClick={fetchCitizens}
+              className="px-6 py-3 bg-blue-50 text-blue-700 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-blue-100 transition-all border border-blue-100"
+            >
+              Refresh Data
+            </button>
             <button className="p-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all group">
                <Filter className="w-5 h-5 group-hover:rotate-12 transition-transform" />
             </button>
@@ -76,55 +98,86 @@ const Citizens = () => {
       </div>
 
       {/* Registry Table */}
-      <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden relative group">
-        <div className="overflow-x-auto relative z-10">
-          <table className="w-full text-left">
-            <thead className="bg-slate-50/50">
-              <tr className="border-b border-gray-100">
-                <th className="p-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">UID / Identity</th>
-                <th className="p-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Full Legal Name</th>
-                <th className="p-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Communication</th>
-                <th className="p-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Native Location</th>
-                <th className="p-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Aadhaar Mask</th>
-                <th className="p-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {filteredCitizens.map((item) => (
-                <tr key={item.id} className="group/row hover:bg-slate-50/80 transition-all cursor-pointer">
-                  <td className="p-6">
-                     <span className="px-3 py-1 bg-blue-50 border border-blue-100 text-blue-700 text-[9px] font-black uppercase tracking-widest rounded-lg">{item.id}</span>
-                  </td>
-                  <td className="p-6">
-                     <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center border-2 border-white shadow-sm font-black text-xs text-slate-500">{item.name.charAt(0)}</div>
-                        <span className="text-sm font-bold text-slate-800 tracking-tight">{item.name}</span>
-                     </div>
-                  </td>
-                  <td className="p-6 text-sm font-bold text-slate-600">{item.mobile}</td>
-                  <td className="p-6">
-                     <div className="flex flex-col">
-                        <span className="text-xs font-bold text-slate-700 uppercase tracking-tighter flex items-center gap-1">
-                           <MapPin className="w-3 h-3 text-blue-600" />
-                           {item.village}
-                        </span>
-                        <span className="text-[9px] font-bold text-slate-400 tracking-widest leading-none mt-0.5 ml-4 uppercase">{item.district}</span>
-                     </div>
-                  </td>
-                  <td className="p-6 font-mono text-xs font-bold text-slate-400 tracking-widest">{item.aadhaar}</td>
-                  <td className="p-6">
-                    <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border-2 text-[9px] font-black uppercase tracking-widest transition-all ${
-                       item.status === 'VERIFIED' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-amber-50 text-amber-700 border-amber-100'
-                    }`}>
-                       <ShieldCheck className={`w-3 h-3 ${item.status === 'VERIFIED' ? 'text-green-600' : 'text-amber-500'}`} />
-                       {item.status}
-                    </div>
-                  </td>
+      <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden relative min-h-[400px]">
+        {loading ? (
+          <div className="flex flex-col items-center justify-center h-[400px] gap-4">
+            <Loader2 className="w-12 h-12 text-blue-600 animate-spin" />
+            <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Accessing Secured Records...</p>
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center h-[400px] gap-4 p-6 text-center">
+            <div className="bg-red-50 p-4 rounded-full">
+              <AlertCircle className="w-8 h-8 text-red-600" />
+            </div>
+            <p className="text-red-600 font-bold uppercase tracking-widest text-xs">{error}</p>
+            <button 
+              onClick={fetchCitizens}
+              className="px-6 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest"
+            >
+              Retry Connection
+            </button>
+          </div>
+        ) : (
+          <div className="overflow-x-auto relative z-10">
+            <table className="w-full text-left">
+              <thead className="bg-slate-50/50">
+                <tr className="border-b border-gray-100">
+                  <th className="p-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">UID / Identity</th>
+                  <th className="p-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Full Legal Name</th>
+                  <th className="p-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Communication</th>
+                  <th className="p-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Native Location</th>
+                  <th className="p-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Aadhaar Mask</th>
+                  <th className="p-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {filteredCitizens.length > 0 ? (
+                  filteredCitizens.map((item) => (
+                    <tr key={item.id} className="group/row hover:bg-slate-50/80 transition-all cursor-pointer">
+                      <td className="p-6">
+                         <span className="px-3 py-1 bg-blue-50 border border-blue-100 text-blue-700 text-[9px] font-black uppercase tracking-widest rounded-lg">CIT-{item.id}</span>
+                      </td>
+                      <td className="p-6">
+                         <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center border-2 border-white shadow-sm font-black text-xs text-slate-500">{item.name?.charAt(0)}</div>
+                            <span className="text-sm font-bold text-slate-800 tracking-tight">{item.name}</span>
+                         </div>
+                      </td>
+                      <td className="p-6 text-sm font-bold text-slate-600">{item.mobile}</td>
+                      <td className="p-6">
+                         <div className="flex flex-col">
+                            <span className="text-xs font-bold text-slate-700 uppercase tracking-tighter flex items-center gap-1">
+                               <MapPin className="w-3 h-3 text-blue-600" />
+                               {item.location.split(',')[0]}
+                            </span>
+                            <span className="text-[9px] font-bold text-slate-400 tracking-widest leading-none mt-0.5 ml-4 uppercase">{item.location.split(',')[1]}</span>
+                         </div>
+                      </td>
+                      <td className="p-6 font-mono text-xs font-bold text-slate-400 tracking-widest">{item.maskedAadhaar}</td>
+                      <td className="p-6">
+                        <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border-2 text-[9px] font-black uppercase tracking-widest transition-all ${
+                           item.status === 'VERIFIED' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-amber-50 text-amber-700 border-amber-100'
+                        }`}>
+                           <ShieldCheck className={`w-3 h-3 ${item.status === 'VERIFIED' ? 'text-green-600' : 'text-amber-500'}`} />
+                           {item.status}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="6" className="p-12 text-center">
+                      <div className="flex flex-col items-center gap-2">
+                        <Users className="w-12 h-12 text-slate-200" />
+                        <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px]">No citizens found matching your criteria</p>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

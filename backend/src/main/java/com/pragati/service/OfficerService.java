@@ -11,4 +11,6 @@ public interface OfficerService {
     );
 
     OfficerResponseDTO loginOfficer(OfficerLoginRequest request);
+
+    java.util.List<CitizenDTO> getAllCitizens();
 }

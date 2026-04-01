@@ -12,7 +12,8 @@ import {
   Calendar,
   MoreVertical,
   Image as ImageIcon,
-  ExternalLink
+  ExternalLink,
+  ChevronDown
 } from 'lucide-react';
 import StatusBadge from '../../components/governance/StatusBadge';
 import { complaintService } from '../../services/api';
@@ -24,6 +25,7 @@ const Complaints = () => {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [updatingId, setUpdatingId] = useState(null);
 
   useEffect(() => {
     fetchComplaints();
@@ -43,6 +45,20 @@ const Complaints = () => {
     }
   };
 
+  const handleStatusUpdate = async (id, newStatus) => {
+    try {
+      setUpdatingId(id);
+      await complaintService.updateComplaintStatus(id, newStatus);
+      // Optimistically update or just re-fetch
+      setComplaints(prev => prev.map(c => c.id === id ? { ...c, status: newStatus } : c));
+    } catch (err) {
+        console.error("Status update failed:", err);
+        alert("Failed to update status: " + (err.response?.data?.message || err.message));
+    } finally {
+        setUpdatingId(null);
+    }
+  }
+
   const filteredComplaints = complaints.filter(c => {
     const searchString = searchTerm.toLowerCase();
     const matchesSearch = 
@@ -54,7 +70,7 @@ const Complaints = () => {
     return matchesSearch && matchesStatus;
   });
 
-  if (loading) return <div className="p-20 flex justify-center"><Loader text="Syncing real-time grievance data..." /></div>;
+  if (loading && complaints.length === 0) return <div className="p-20 flex justify-center"><Loader text="Syncing real-time grievance data..." /></div>;
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -132,7 +148,7 @@ const Complaints = () => {
                 <th className="p-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Basic Info</th>
                 <th className="p-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Description</th>
                 <th className="p-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Location</th>
-                <th className="p-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Status</th>
+                <th className="p-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Status Control</th>
                 <th className="p-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Received</th>
                 <th className="p-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Docs</th>
                 <th className="p-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Action</th>
@@ -145,7 +161,7 @@ const Complaints = () => {
                 </tr>
               ) : (
                 filteredComplaints.map((item) => (
-                  <tr key={item.id} className="group/row hover:bg-slate-50/80 transition-all cursor-pointer">
+                  <tr key={item.id} className="group/row hover:bg-slate-50/80 transition-all">
                     <td className="p-6 font-extrabold text-xs text-blue-900">#{item.id}</td>
                     <td className="p-6">
                        <div className="flex flex-col">
@@ -158,19 +174,35 @@ const Complaints = () => {
                     </td>
                     <td className="p-6 text-xs font-bold text-slate-600 italic">{item.location}</td>
                     <td className="p-6">
-                      <StatusBadge status={item.status} />
+                      <div className="relative group/status flex items-center gap-2">
+                        <StatusBadge status={item.status} />
+                        {updatingId === item.id ? (
+                            <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                        ) : (
+                            <select 
+                                value={item.status}
+                                onChange={(e) => handleStatusUpdate(item.id, e.target.value)}
+                                className="opacity-0 group-hover/status:opacity-100 absolute inset-0 w-full cursor-pointer bg-transparent appearance-none text-[0px]"
+                            >
+                                <option value="PENDING">Pending</option>
+                                <option value="IN_PROGRESS">In Progress</option>
+                                <option value="RESOLVED">Resolved</option>
+                            </select>
+                        )}
+                      </div>
                     </td>
                     <td className="p-6 text-[10px] font-bold text-slate-500 uppercase">{new Date(item.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
                     <td className="p-6">
-                      {item.attachmentUrl ? (
+                      {item.attachmentPath ? (
                         <div className="flex items-center gap-2">
                            <a 
-                             href={item.attachmentUrl} 
+                             href={item.attachmentPath} 
                              target="_blank" 
                              rel="noopener noreferrer" 
-                             className="p-2 bg-slate-100 rounded-lg text-[#1E3A8A] hover:bg-[#1E3A8A] hover:text-white transition-all shadow-sm"
+                             className="p-2.5 bg-blue-50 text-[#1E3A8A] rounded-xl hover:bg-[#1E3A8A] hover:text-white transition-all shadow-sm flex items-center gap-2 group/doc"
                            >
-                              {item.attachmentUrl.match(/\.(jpg|jpeg|png|gif)$/i) ? <ImageIcon className="w-4 h-4" /> : <FileText className="w-4 h-4" />}
+                              {item.attachmentPath.match(/\.(jpg|jpeg|png|gif)$/i) ? <ImageIcon className="w-4 h-4" /> : <FileText className="w-4 h-4" />}
+                              <span className="text-[9px] font-black uppercase hidden group-hover/doc:block transition-all">Open File</span>
                            </a>
                         </div>
                       ) : (
@@ -182,9 +214,21 @@ const Complaints = () => {
                          <button className="p-2.5 text-blue-600 hover:bg-blue-50 rounded-xl transition-all shadow-sm shadow-blue-50/50" title="Full Record Analysis">
                             <Eye className="w-4 h-4" />
                          </button>
-                         <button className="p-2.5 text-orange-600 hover:bg-orange-50 rounded-xl transition-all shadow-sm shadow-orange-50/50" title="Modify Status">
-                            <Edit3 className="w-4 h-4" />
-                         </button>
+                         <div className="flex flex-col gap-1">
+                            {['PENDING', 'IN_PROGRESS', 'RESOLVED'].filter(s => s !== item.status).map(s => (
+                                <button 
+                                    key={s} 
+                                    onClick={() => handleStatusUpdate(item.id, s)}
+                                    className={`px-2 py-1 text-[8px] font-black uppercase rounded-lg border transition-all ${
+                                        s === 'RESOLVED' ? 'border-green-200 text-green-600 hover:bg-green-600 hover:text-white' :
+                                        s === 'IN_PROGRESS' ? 'border-blue-200 text-blue-600 hover:bg-blue-600 hover:text-white' :
+                                        'border-slate-200 text-slate-600 hover:bg-slate-600 hover:text-white'
+                                    }`}
+                                >
+                                    To {s.replace('_', ' ')}
+                                </button>
+                            ))}
+                         </div>
                       </div>
                     </td>
                   </tr>

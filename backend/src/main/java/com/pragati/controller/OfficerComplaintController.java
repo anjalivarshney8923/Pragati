@@ -16,6 +16,10 @@ import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.web.bind.annotation.*;
+import java.util.Map;
+import java.util.HashMap;
+
 @RestController
 @RequestMapping("/api/officer")
 @RequiredArgsConstructor
@@ -39,6 +43,24 @@ public class OfficerComplaintController {
             errorDetails.put("message", "Error fetching complaints: " + e.getMessage());
             errorDetails.put("timestamp", java.time.LocalDateTime.now());
             return new ResponseEntity<>(errorDetails, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PutMapping("/complaints/{id}/status")
+    @PreAuthorize("hasRole('OFFICER')")
+    public ResponseEntity<?> updateComplaintStatus(@PathVariable Long id, @RequestBody Map<String, String> request) {
+        log.info("Update status for complaint ID {} by officer", id);
+        try {
+            String status = request.get("status");
+            complaintService.updateStatus(id, status);
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Status updated successfully to " + status);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Error updating complaint status: {}", e.getMessage());
+            Map<String, String> error = new HashMap<>();
+            error.put("message", e.getMessage());
+            return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
         }
     }
 }
