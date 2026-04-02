@@ -14,12 +14,14 @@ import {
 } from 'lucide-react';
 
 import InputField from '../components/InputField';
+import SelectField from '../components/SelectField';
 import Button from '../components/Button';
 import Stepper from '../components/Stepper';
 import Loader from '../components/Loader';
 import FileUpload from '../components/FileUpload';
 import FaceVerification from '../components/FaceVerification';
 import OTPInput from '../components/OTPInput';
+import { getStates, getDistricts, getVillages, getPanchayats } from '../utils/locationData';
 
 
 
@@ -45,6 +47,11 @@ const Register = () => {
 
   const [faceImage, setFaceImage] = useState(null);
   const [faceVerified, setFaceVerified] = useState(false);
+
+  // Location states for cascading dropdowns
+  const [selectedState, setSelectedState] = useState('');
+  const [selectedDistrict, setSelectedDistrict] = useState('');
+  const [selectedVillage, setSelectedVillage] = useState('');
 
   // Age state mock
   const [ageVerified, setAgeVerified] = useState(false);
@@ -72,6 +79,49 @@ const Register = () => {
     }
     return () => clearInterval(interval);
   }, [timer]);
+
+  // Handle cascading dropdowns
+  useEffect(() => {
+    if (formData.state !== selectedState) {
+      setSelectedState(formData.state || '');
+    }
+  }, [formData.state, selectedState]);
+
+  useEffect(() => {
+    if (formData.district !== selectedDistrict) {
+      setSelectedDistrict(formData.district || '');
+    }
+  }, [formData.district, selectedDistrict]);
+
+  useEffect(() => {
+    if (formData.village !== selectedVillage) {
+      setSelectedVillage(formData.village || '');
+    }
+  }, [formData.village, selectedVillage]);
+
+  useEffect(() => {
+    if (selectedState) {
+      setSelectedDistrict('');
+      setSelectedVillage('');
+      setValue('district', '');
+      setValue('village', '');
+      setValue('panchayat', '');
+    }
+  }, [selectedState, setValue]);
+
+  useEffect(() => {
+    if (selectedDistrict) {
+      setSelectedVillage('');
+      setValue('village', '');
+      setValue('panchayat', '');
+    }
+  }, [selectedDistrict, setValue]);
+
+  useEffect(() => {
+    if (selectedVillage) {
+      setValue('panchayat', '');
+    }
+  }, [selectedVillage, setValue]);
 
   const handleNext = async () => {
     let fieldsToValidate = [];
@@ -299,10 +349,45 @@ const Register = () => {
                 <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
                   <h3 className="text-2xl font-bold text-slate-800 mb-6 border-b pb-2">{t('register.addressDetails')}</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <InputField label={t('register.state')} name="state" icon={MapPin} {...register('state', { required: t('register.stateRequired') })} error={errors.state} />
-                    <InputField label={t('register.district')} name="district" icon={MapPin} {...register('district', { required: t('register.districtRequired') })} error={errors.district} />
-                    <InputField label={t('register.villageTown')} name="village" icon={MapPin} {...register('village', { required: t('register.villageRequired') })} error={errors.village} />
-                    <InputField label={t('register.panchayatWard')} name="panchayat" icon={Building2} {...register('panchayat', { required: t('register.panchayatRequired') })} error={errors.panchayat} />
+                    <SelectField
+                      label={t('register.state')}
+                      name="state"
+                      icon={MapPin}
+                      options={getStates()}
+                      placeholder="Select State"
+                      {...register('state', { required: t('register.stateRequired') })}
+                      error={errors.state}
+                    />
+                    <SelectField
+                      label={t('register.district')}
+                      name="district"
+                      icon={MapPin}
+                      options={getDistricts(selectedState)}
+                      placeholder="Select District"
+                      disabled={!selectedState}
+                      {...register('district', { required: t('register.districtRequired') })}
+                      error={errors.district}
+                    />
+                    <SelectField
+                      label={t('register.villageTown')}
+                      name="village"
+                      icon={MapPin}
+                      options={getVillages(selectedState, selectedDistrict)}
+                      placeholder="Select Village"
+                      disabled={!selectedDistrict}
+                      {...register('village', { required: t('register.villageRequired') })}
+                      error={errors.village}
+                    />
+                    <SelectField
+                      label={t('register.panchayatWard')}
+                      name="panchayat"
+                      icon={Building2}
+                      options={getPanchayats(selectedState, selectedDistrict, selectedVillage)}
+                      placeholder="Select Panchayat/Ward"
+                      disabled={!selectedVillage}
+                      {...register('panchayat', { required: t('register.panchayatRequired') })}
+                      error={errors.panchayat}
+                    />
                   </div>
                 </motion.div>
               )}
