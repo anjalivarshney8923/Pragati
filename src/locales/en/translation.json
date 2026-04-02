@@ -200,5 +200,28 @@
     "fundsOverview": "Funds Overview",
     "fundsAllocated": "Funds Allocated",
     "fundsUsed": "Funds Used"
+  },
+  "governmentSchemes": {
+    "title": "Government Schemes",
+    "subtitle": "Track government scheme funds allocation and usage",
+    "state": "State",
+    "district": "District", 
+    "village": "Village",
+    "scheme": "Scheme",
+    "year": "Year",
+    "workType": "Work Type",
+    "allStates": "All States",
+    "allDistricts": "All Districts",
+    "allVillages": "All Villages",
+    "allSchemes": "All Schemes",
+    "allYears": "All Years",
+    "allWorkTypes": "All Work Types",
+    "chartType": "Chart Type",
+    "pie": "Pie",
+    "bar": "Bar",
+    "schemeFundsOverview": "Scheme Funds Overview",
+    "totalFundsAllocated": "Total Funds Allocated",
+    "totalFundsUsed": "Total Funds Used",
+    "remainingBalance": "Remaining Balance"
   }
 }

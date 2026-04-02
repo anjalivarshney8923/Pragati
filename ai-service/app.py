@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 import face_recognition
 from flask_cors import CORS
 from village_funds import get_village_funds_data
+from schemes_funds import get_schemes_funds_data
 
 # OCR dependencies
 import io
@@ -56,6 +57,24 @@ def village_funds(village, year, sub_village):
         return jsonify(data)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@app.route("/schemes-funds", methods=["GET"])
+def schemes_funds():
+    try:
+        # Get query parameters
+        state = request.args.get('state', 'all')
+        district = request.args.get('district', 'all')
+        village = request.args.get('village', 'all')
+        scheme = request.args.get('scheme', 'all')
+        year = request.args.get('year', 'all')
+        work_type = request.args.get('work_type', 'all')
+
+        data = get_schemes_funds_data(state, district, village, scheme, year, work_type)
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 
 @app.route('/extract_dob', methods=['POST'])
