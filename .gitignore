@@ -18,6 +18,35 @@ dist-ssr
 .idea
 .DS_Store
 *.suo
+
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.git
+.mypy_cache
+.pytest_cache
+.hypothesis
+
+# Java
+target/
+*.class
+*.jar
+!backend/target/*.jar
 *.ntvs*
 *.njsproj
 *.sln
