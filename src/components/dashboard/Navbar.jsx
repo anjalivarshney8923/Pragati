@@ -1,10 +1,23 @@
 import React from 'react';
 import { Menu, LogOut, User, Bell } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
 const Navbar = ({ toggleSidebar }) => {
   const { t, i18n } = useTranslation();
+  
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    // Clear auth-related storage and redirect to login
+    try {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+    } catch (e) {
+      // ignore
+    }
+    navigate('/login', { replace: true });
+  };
 
   const toggleLanguage = () => {
     const newLang = i18n.language === 'en' ? 'hi' : 'en';
@@ -64,6 +77,7 @@ const Navbar = ({ toggleSidebar }) => {
               </div>
             </button>
             <button 
+              onClick={handleLogout}
               className="hidden sm:flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors ml-2"
               title="Logout"
             >
