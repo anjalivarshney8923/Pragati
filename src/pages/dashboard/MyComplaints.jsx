@@ -18,7 +18,9 @@ const MyComplaints = () => {
       setComplaints(data);
     } catch (err) {
       console.error(err);
-      setError('Failed to fetch complaints. Please try again later.');
+      const status = err?.response?.status;
+      const serverMsg = err?.response?.data?.message || err?.response?.data || err?.message;
+      setError(serverMsg ? `${serverMsg} ${status ? `(status ${status})` : ''}` : 'Failed to fetch complaints. Please try again later.');
     } finally {
       setIsLoading(false);
     }

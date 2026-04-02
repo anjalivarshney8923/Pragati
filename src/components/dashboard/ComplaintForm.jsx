@@ -96,11 +96,13 @@ const ComplaintForm = () => {
     setIsLoading(true);
     
     try {
-      const payload = new FormData();
-      payload.append('title', formData.title);
-      payload.append('category', formData.category);
-      payload.append('description', formData.description);
-      payload.append('location', formData.location);
+  const payload = new FormData();
+  payload.append('title', formData.title);
+  payload.append('category', formData.category);
+  payload.append('description', formData.description);
+  // Backend requires location; if user didn't provide, send a default value
+  const locationToSend = formData.location && formData.location.trim() ? formData.location.trim() : 'Not specified';
+  payload.append('location', locationToSend);
       if (coordinates.lat) payload.append('latitude', coordinates.lat);
       if (coordinates.lng) payload.append('longitude', coordinates.lng);
 
@@ -120,7 +122,17 @@ const ComplaintForm = () => {
 
     } catch (error) {
       console.error("Complaint Submission Failed: ", error);
-      alert(error.response?.data?.message || t('raiseComplaint.failedToSubmit'));
+      // Provide clearer error messages for debugging (status + server message + field errors)
+      const status = error?.response?.status;
+      const data = error?.response?.data;
+      const serverMsg = data?.message || data || error?.message;
+      let alertMsg = serverMsg ? `${serverMsg} ${status ? `(status ${status})` : ''}` : t('raiseComplaint.failedToSubmit');
+      // If validation errors provided, append them
+      if (data && data.errors && typeof data.errors === 'object') {
+        const fieldMsgs = Object.entries(data.errors).map(([k, v]) => `${k}: ${v}`);
+        alertMsg += '\n' + fieldMsgs.join('\n');
+      }
+      alert(alertMsg);
       setIsLoading(false);
     }
   };

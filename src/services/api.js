@@ -1,10 +1,10 @@
 import axios from 'axios';
 
+// Use Vite env var if provided, otherwise default to IPv4 loopback to avoid localhost IPv6 issues
+const API_BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8080/api';
+
 const api = axios.create({
-  baseURL: 'http://localhost:8080/api',
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  baseURL: API_BASE,
 });
 
 // Automatically attach JWT token to every request
@@ -17,6 +17,24 @@ api.interceptors.request.use(
     return config;
   },
   (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Global response interceptor: if auth errors occur, clear token and redirect to login
+api.interceptors.response.use(
+  response => response,
+  (error) => {
+    const status = error?.response?.status;
+    if (status === 401 || status === 403) {
+      try {
+        localStorage.removeItem('token');
+        // Redirect to login page
+        window.location.href = '/login';
+      } catch (e) {
+        // ignore
+      }
+    }
     return Promise.reject(error);
   }
 );
@@ -34,11 +52,8 @@ export const authService = {
 
   // Officer Auth (Governance Portal)
   registerOfficer: async (formData) => {
-    const response = await api.post('/auth/register-officer', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    // Let the browser set Content-Type (including multipart boundary)
+    const response = await api.post('/auth/register-officer', formData);
     return response.data;
   },
   loginOfficer: async (credentials) => {
@@ -49,11 +64,8 @@ export const authService = {
 
 export const complaintService = {
   createComplaint: async (complaintData) => {
-    const response = await api.post('/complaints', complaintData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    // For FormData, don't set Content-Type header so the browser sets the correct multipart boundary
+    const response = await api.post('/complaints', complaintData);
     return response.data;
   },
   getMyComplaints: async () => {
