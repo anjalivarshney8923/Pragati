@@ -1,17 +1,67 @@
-import React from 'react';
-import { Wallet, PieChart, Landmark, IndianRupee } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
+import { Landmark, PieChart as PieIcon, BarChart3 } from 'lucide-react';
+import axios from 'axios';
+import { useTranslation } from 'react-i18next';
 
 const VillageFunds = () => {
-  // Dummy Data
-  const totalAllocated = 600000;
-  const fundsUsed = 180000;
-  const remaining = totalAllocated - fundsUsed;
-  
-  const progressPercentage = (fundsUsed / totalAllocated) * 100;
+  const [selectedVillage, setSelectedVillage] = useState('bhojpur');
+  const [selectedYear, setSelectedYear] = useState('2023_2024');
+  const [selectedSubVillage, setSelectedSubVillage] = useState('all');
+  const [chartType, setChartType] = useState('pie');
+  const [data, setData] = useState(null);
+  const [subVillages, setSubVillages] = useState(['all']);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const villages = ['bhojpur', 'loni', 'muradnagar', 'rajapur'];
+  const years = ['2020_2021', '2021_2022', '2022_2023', '2023_2024', '2024_2025', '2025_2026'];
+
+  const { t } = useTranslation();
+
+  useEffect(() => {
+    fetchData();
+  }, [selectedVillage, selectedYear, selectedSubVillage]);
+
+  const fetchData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axios.get(`http://localhost:5000/village-funds/${selectedVillage}/${selectedYear}/${selectedSubVillage}`);
+      const fetchedData = response.data;
+      // Translate pie data names
+      if (fetchedData.pie_data) {
+        fetchedData.pie_data = fetchedData.pie_data.map(item => ({
+          ...item,
+          name: item.name === 'Funds Allocated' ? t('villageFunds.fundsAllocated') : t('villageFunds.fundsUsed')
+        }));
+      }
+      setData(fetchedData);
+      if (selectedSubVillage === 'all' && fetchedData.bar_data) {
+        setSubVillages(['all', ...fetchedData.bar_data.map(d => d.sub_village)]);
+      }
+    } catch (err) {
+      console.error('Fetch error:', err);
+      setError(err.response?.data?.error || 'Failed to fetch data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatAmount = (value) => {
+    if (value >= 10000000) {
+      return `₹${(value / 10000000).toFixed(2)} Cr`;
+    } else if (value >= 100000) {
+      return `₹${(value / 100000).toFixed(2)} L`;
+    } else {
+      return `₹${value.toLocaleString('en-IN')}`;
+    }
+  };
+
+  const pieColors = ['#10b981', '#ef4444']; // Green for Allocated, Red for Used
 
   return (
     <div className="space-y-6">
-      
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
         <div>
@@ -19,82 +69,130 @@ const VillageFunds = () => {
             <div className="p-2 bg-blue-100 text-blue-600 rounded-lg shadow-sm">
               <Landmark size={24} />
             </div>
-            Village Funds
+            {t('villageFunds.title')}
           </h1>
-          <p className="text-slate-500 mt-2 font-medium">Real-time overview of Gram Panchayat fund allocation and usage.</p>
+          <p className="text-slate-500 mt-2 font-medium">{t('villageFunds.subtitle')}</p>
         </div>
       </div>
 
-      {/* Main Budget Card */}
-      <div className="bg-white rounded-2xl p-6 lg:p-8 shadow-sm border border-slate-200">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          
-          <div className="col-span-1 md:col-span-2 space-y-6">
-            <div>
-              <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Total Budget Allocated (2023-24)</h3>
-              <div className="text-4xl lg:text-5xl font-extrabold text-gov-blue tracking-tight">
-                ₹{totalAllocated.toLocaleString('en-IN')}
-              </div>
-            </div>
-
-            <div className="space-y-3 pt-4">
-              <div className="flex justify-between text-sm font-bold text-slate-700">
-                <span>Funds Utilization</span>
-                <span>{progressPercentage.toFixed(1)}% Used</span>
-              </div>
-              <div className="w-full h-4 bg-slate-100 rounded-full overflow-hidden shadow-inner">
-                <div 
-                  className="h-full bg-gradient-to-r from-gov-blue to-blue-400 rounded-full transition-all duration-1000 ease-out"
-                  style={{ width: `${progressPercentage}%` }}
-                ></div>
-              </div>
-              <div className="flex justify-between text-xs font-semibold text-slate-500">
-                <span>₹0</span>
-                <span>₹{totalAllocated.toLocaleString('en-IN')}</span>
-              </div>
+      {/* Controls */}
+      <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+        <div className="flex flex-wrap gap-4 items-center">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">{t('villageFunds.selectVillage')}</label>
+            <select
+              value={selectedVillage}
+              onChange={(e) => { setSelectedVillage(e.target.value); setSelectedSubVillage('all'); setSubVillages(['all']); }}
+              className="border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {villages.map(v => <option key={v} value={v}>{v.charAt(0).toUpperCase() + v.slice(1)}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">{t('villageFunds.selectYear')}</label>
+            <select
+              value={selectedYear}
+              onChange={(e) => { setSelectedYear(e.target.value); setSelectedSubVillage('all'); setSubVillages(['all']); }}
+              className="border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {years.map(y => <option key={y} value={y}>{y.replace('_', '-')}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">{t('villageFunds.selectSubVillage')}</label>
+            <select
+              value={selectedSubVillage}
+              onChange={(e) => setSelectedSubVillage(e.target.value)}
+              className="border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {subVillages.map(sv => <option key={sv} value={sv}>{sv === 'all' ? t('villageFunds.allSubVillages') : sv}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">{t('villageFunds.chartType')}</label>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setChartType('pie')}
+                className={`px-4 py-2 rounded-lg border ${chartType === 'pie' ? 'bg-blue-500 text-white' : 'bg-white text-slate-700'}`}
+              >
+                <PieIcon size={16} className="inline mr-1" /> {t('villageFunds.pie')}
+              </button>
+              <button
+                onClick={() => setChartType('bar')}
+                className={`px-4 py-2 rounded-lg border ${chartType === 'bar' ? 'bg-blue-500 text-white' : 'bg-white text-slate-700'}`}
+              >
+                <BarChart3 size={16} className="inline mr-1" /> {t('villageFunds.bar')}
+              </button>
             </div>
           </div>
-
-          <div className="col-span-1 flex flex-col justify-center space-y-4 md:border-l md:border-slate-100 md:pl-8">
-            <div className="bg-green-50 border border-green-100 rounded-xl p-4 transition-all hover:shadow-md">
-              <p className="text-xs font-bold text-green-600 uppercase mb-1">Remaining Balance</p>
-              <p className="text-2xl font-bold text-slate-800">₹{remaining.toLocaleString('en-IN')}</p>
-            </div>
-            <div className="bg-orange-50 border border-orange-100 rounded-xl p-4 transition-all hover:shadow-md">
-              <p className="text-xs font-bold text-orange-600 uppercase mb-1">Funds Used</p>
-              <p className="text-2xl font-bold text-slate-800">₹{fundsUsed.toLocaleString('en-IN')}</p>
-            </div>
-          </div>
-
         </div>
       </div>
 
-      {/* Breakdowns */}
-      <h3 className="text-xl font-bold text-slate-800 pt-4 flex items-center gap-2">
-        <PieChart className="text-gov-blue" size={24} />
-        Fund Categories
-      </h3>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {[
-          { title: "Infrastructure", amount: "₹2,50,000", color: "blue" },
-          { title: "Water Management", amount: "₹1,20,000", color: "teal" },
-          { title: "Sanitation", amount: "₹80,000", color: "orange" },
-          { title: "Education", amount: "₹1,00,000", color: "purple" },
-          { title: "Healthcare", amount: "₹50,000", color: "rose" },
-        ].map((item, idx) => (
-          <div key={idx} className="bg-white rounded-xl p-5 shadow-sm border border-slate-200 flex items-center gap-4 hover:border-slate-300 transition-colors">
-            <div className={`p-4 rounded-full bg-${item.color}-50 text-${item.color}-600`}>
-              <IndianRupee size={20} />
+      {/* Totals */}
+      {data && !error && (
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+              <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">{t('villageFunds.totalFundsAllocated')}</h3>
+              <div className="text-3xl font-extrabold text-green-600">
+                {formatAmount(data.total_allocated)}
+              </div>
             </div>
             <div>
-              <p className="text-sm font-bold text-slate-500 uppercase tracking-wide">{item.title}</p>
-              <p className="text-xl font-bold text-slate-800 mt-1">{item.amount}</p>
+              <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">{t('villageFunds.totalFundsUsed')}</h3>
+              <div className="text-3xl font-extrabold text-red-600">
+                {formatAmount(data.total_used)}
+              </div>
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">{t('villageFunds.remainingBalance')}</h3>
+              <div className="text-3xl font-extrabold text-blue-600">
+                {formatAmount(data.total_allocated - data.total_used)}
+              </div>
             </div>
           </div>
-        ))}
-      </div>
+        </div>
+      )}
 
+      {/* Chart */}
+      <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+        <h3 className="text-xl font-bold text-slate-800 mb-4">{t('villageFunds.fundsOverview')}</h3>
+        {loading && <p>Loading...</p>}
+        {error && <p className="text-red-500">{error}</p>}
+        {data && !error && (
+          <ResponsiveContainer width="100%" height={400}>
+            {chartType === 'bar' ? (
+              <BarChart data={data.bar_data}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="sub_village" />
+                <YAxis tickFormatter={formatAmount} />
+                <Tooltip formatter={(value) => formatAmount(value)} />
+                <Legend />
+                <Bar dataKey="allocated" fill="#10b981" name={t('villageFunds.fundsAllocated')} />
+                <Bar dataKey="used" fill="#ef4444" name={t('villageFunds.fundsUsed')} />
+              </BarChart>
+            ) : (
+              <PieChart>
+                <Pie
+                  data={data.pie_data}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  outerRadius={120}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {data.pie_data.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={pieColors[index % pieColors.length]} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(value) => formatAmount(value)} />
+              </PieChart>
+            )}
+          </ResponsiveContainer>
+        )}
+      </div>
     </div>
   );
 };

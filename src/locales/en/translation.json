@@ -183,5 +183,22 @@
   },
   "common": {
     "governancePortal": "Governance Portal"
+  },
+  "villageFunds": {
+    "title": "Village Funds",
+    "subtitle": "Real-time overview of Gram Panchayat fund allocation and usage.",
+    "selectVillage": "Select Village",
+    "selectYear": "Select Year",
+    "selectSubVillage": "Select Sub-Village",
+    "allSubVillages": "All Sub-Villages",
+    "chartType": "Chart Type",
+    "pie": "Pie",
+    "bar": "Bar",
+    "totalFundsAllocated": "Total Funds Allocated",
+    "totalFundsUsed": "Total Funds Used",
+    "remainingBalance": "Remaining Balance",
+    "fundsOverview": "Funds Overview",
+    "fundsAllocated": "Funds Allocated",
+    "fundsUsed": "Funds Used"
   }
 }

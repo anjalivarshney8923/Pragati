@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 import face_recognition
 from flask_cors import CORS
+from village_funds import get_village_funds_data
 
 app = Flask(__name__)
 CORS(app)
@@ -30,6 +31,15 @@ def verify():
             "confidence": float(1 - distance)
         })
 
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/village-funds/<village>/<year>/<sub_village>", methods=["GET"])
+def village_funds(village, year, sub_village):
+    try:
+        data = get_village_funds_data(village, year, sub_village)
+        return jsonify(data)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

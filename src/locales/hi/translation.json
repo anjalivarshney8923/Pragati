@@ -183,5 +183,22 @@
   },
   "common": {
     "governancePortal": "गवर्नेंस पोर्टल"
+  },
+  "villageFunds": {
+    "title": "ग्राम निधि",
+    "subtitle": "ग्राम पंचायत निधि आवंटन और उपयोग का वास्तविक समय अवलोकन।",
+    "selectVillage": "ग्राम चुनें",
+    "selectYear": "वर्ष चुनें",
+    "selectSubVillage": "उप-ग्राम चुनें",
+    "allSubVillages": "सभी उप-ग्राम",
+    "chartType": "चार्ट प्रकार",
+    "pie": "पाई",
+    "bar": "बार",
+    "totalFundsAllocated": "कुल आवंटित निधि",
+    "totalFundsUsed": "कुल उपयोग की गई निधि",
+    "remainingBalance": "शेष राशि",
+    "fundsOverview": "निधि अवलोकन",
+    "fundsAllocated": "आवंटित निधि",
+    "fundsUsed": "उपयोग की गई निधि"
   }
 }
