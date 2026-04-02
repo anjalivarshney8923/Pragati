@@ -55,6 +55,7 @@ const Register = () => {
 
   // Age state mock
   const [ageVerified, setAgeVerified] = useState(false);
+  const [ageYears, setAgeYears] = useState(null);
 
   // Mock OTP State
   const [otpSent, setOtpSent] = useState(false);
@@ -222,10 +223,46 @@ const Register = () => {
     setCurrentStep(5);
   };
 
+  // Compute age from DOB string (expects YYYY-MM-DD)
+  const computeAgeFromDob = (dobStr) => {
+    if (!dobStr) return null;
+    const birth = new Date(dobStr);
+    if (isNaN(birth.getTime())) return null;
+    const today = new Date();
+    let age = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+    return age;
+  };
+
+  // Auto-verify age when both face is captured and DOB is available from Aadhaar
+  const dobValue = watch('dob');
+  useEffect(() => {
+    let timerId = null;
+    if (!ageVerified && faceVerified && dobValue) {
+      const age = computeAgeFromDob(dobValue);
+      if (age !== null) {
+        setAgeYears(age);
+        setAgeVerified(true);
+        // Show authenticated panel for at least 2.5 seconds, then auto-advance to OTP (step 6)
+        timerId = setTimeout(() => {
+          setCurrentStep(6);
+        }, 2500);
+      }
+    }
+
+    return () => {
+      if (timerId) clearTimeout(timerId);
+    };
+  }, [faceVerified, dobValue]);
+
 
   const handleAgeVerify = () => {
     setIsLoading(true);
     setTimeout(() => {
+      // compute age from DOB if available
+      const computed = computeAgeFromDob(watch('dob'));
+      if (computed !== null) setAgeYears(computed);
       setAgeVerified(true);
       setIsLoading(false);
     }, 1000);
@@ -463,7 +500,7 @@ const Register = () => {
                     <div className="bg-green-50 border-2 border-green-200 rounded-2xl p-8 shadow-inner relative overflow-hidden">
                       <div className="absolute top-0 left-0 w-full h-2 bg-green-500"></div>
                       <p className="text-green-700 text-sm uppercase font-extrabold tracking-wider mb-2">{t('register.ageAuthenticated')}</p>
-                      <p className="text-4xl font-extrabold text-[#138808] mb-4">{t('register.years')}</p>
+                      <p className="text-4xl font-extrabold text-[#138808] mb-4">{ageYears !== null ? `${ageYears} ${t('register.years')}` : t('register.years')}</p>
                       <div className="inline-flex items-center text-green-800 font-bold p-2">
                         <CheckCircle className="w-6 h-6 mr-2 text-green-600" />
                         {t('register.eligiblePortal')}

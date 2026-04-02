@@ -2,6 +2,11 @@ flask
 flask-cors
 face_recognition
 pandas
+pytesseract
+Pillow
+opencv-python
+numpy
 
 
 # Note: face_recognition requires dlib and CMake; install system deps first.
+# OCR (pytesseract) also requires the Tesseract binary installed on the system (brew install tesseract / apt install tesseract-ocr)
