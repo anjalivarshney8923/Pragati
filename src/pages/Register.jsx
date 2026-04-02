@@ -46,6 +46,7 @@ const Register = () => {
   const [aadhaarVerified, setAadhaarVerified] = useState(false);
 
   const [faceImage, setFaceImage] = useState(null);
+  const [facePreview, setFacePreview] = useState(null);
   const [faceVerified, setFaceVerified] = useState(false);
 
   // Location states for cascading dropdowns
@@ -80,6 +81,18 @@ const Register = () => {
     }
     return () => clearInterval(interval);
   }, [timer]);
+
+  // Cleanup object URLs on unmount
+  useEffect(() => {
+    return () => {
+      if (aadhaarPreview && aadhaarPreview.startsWith('blob:')) {
+        URL.revokeObjectURL(aadhaarPreview);
+      }
+      if (facePreview && facePreview.startsWith('blob:')) {
+        URL.revokeObjectURL(facePreview);
+      }
+    };
+  }, []); // Empty dependency array - only run on unmount
 
   // Handle cascading dropdowns
   useEffect(() => {
@@ -217,6 +230,7 @@ const Register = () => {
     console.log("Verified Face File:", imageFile);
 
     setFaceImage(imageFile);
+    setFacePreview(URL.createObjectURL(imageFile));
     setFaceVerified(true);
 
     // 🔥 MOVE TO NEXT STEP (Age Check)
@@ -598,7 +612,7 @@ const Register = () => {
                         </div>
                         <div className="flex flex-col items-center border-l sm:border-t-0 sm:border-l border-slate-300 pl-0 sm:pl-6 pt-6 sm:pt-0 mt-4 sm:mt-0">
                           <span className="text-xs font-bold text-slate-500 uppercase mb-2 block">{t('register.livenessNetID')}</span>
-                          {faceImage ? <img src={faceImage} alt="Face" className="w-20 h-20 object-cover rounded-full shadow border-2 border-[#1E3A8A]" /> : <div className="w-20 h-20 bg-slate-200 rounded-full animate-pulse" />}
+                          {facePreview ? <img src={facePreview} alt="Face" className="w-20 h-20 object-cover rounded-full shadow border-2 border-[#1E3A8A]" /> : <div className="w-20 h-20 bg-slate-200 rounded-full animate-pulse" />}
                         </div>
                         <div className="flex flex-col items-center border-l sm:border-t-0 sm:border-l border-slate-300 pl-0 sm:pl-6 pt-6 sm:pt-0 mt-4 sm:mt-0">
                           <span className="text-xs font-bold text-slate-500 uppercase mb-2 block">{t('register.systemValidations')}</span>
