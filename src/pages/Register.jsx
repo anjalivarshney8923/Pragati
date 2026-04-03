@@ -196,39 +196,27 @@ const Register = () => {
     }
   };
 
-  // Mock API Handlers
   const handleAadhaarUpload = () => {
-    if (aadhaarFile) {
-      setIsLoading(true);
-      // Upload Aadhaar and try to extract DOB from the uploaded image
-      (async () => {
-        try {
-          const fd = new FormData();
-          fd.append('aadhaar', aadhaarFile);
-          // call OCR endpoint to extract DOB
-          const res = await fetch('http://127.0.0.1:5000/extract_dob', { method: 'POST', body: fd });
-          if (res.ok) {
-            const data = await res.json();
-            if (data && data.dob) {
-              // autofill the DOB field in the form for step 5
-              setValue('dob', data.dob);
-            }
-          }
-          // Simulate server-side upload/verification success
-          setTimeout(() => {
-            setAadhaarVerified(true);
-            setSubStage(1); // show doc accepted
-            setIsLoading(false);
-            // after 1s auto-open camera
-            setTimeout(() => setSubStage(2), 1000);
-          }, 800);
-        } catch (err) {
-          console.error('Aadhaar upload / DOB extraction failed', err);
-          setAadhaarVerified(true); // still allow progression; user can retry DOB in next step
-          setIsLoading(false);
+    if (!aadhaarFile) return;
+    setIsLoading(true);
+    (async () => {
+      try {
+        const fd = new FormData();
+        fd.append('aadhaar', aadhaarFile);
+        const res = await fetch('http://127.0.0.1:5001/extract_dob', { method: 'POST', body: fd });
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.dob) setValue('dob', data.dob);
         }
-      })();
-    }
+      } catch (err) {
+        console.warn('DOB extraction failed, continuing anyway:', err);
+      } finally {
+        setAadhaarVerified(true);
+        setSubStage(1);
+        setIsLoading(false);
+        setTimeout(() => setSubStage(2), 1000);
+      }
+    })();
   };
 
   const handleFaceCaptureSubmit = (imageFile) => {

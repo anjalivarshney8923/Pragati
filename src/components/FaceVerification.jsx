@@ -43,7 +43,7 @@ export default function FaceVerification({
             setStatus("Extracting DOB from Aadhaar...");
             const fd = new FormData();
             fd.append("image", file);
-            const res = await fetch("http://127.0.0.1:5000/extract_dob", { method: "POST", body: fd });
+            const res = await fetch("http://127.0.0.1:5001/extract_dob", { method: "POST", body: fd });
             if (!res.ok) {
                 setStatus("DOB extraction failed");
                 return null;
@@ -109,7 +109,7 @@ export default function FaceVerification({
             setStatus("Uploading images to verification service...");
 
             try {
-                const res = await fetch("http://127.0.0.1:5000/verify", { method: "POST", body: fd });
+                const res = await fetch("http://127.0.0.1:5001/verify", { method: "POST", body: fd });
                 if (!res.ok) {
                     const txt = await res.text();
                     throw new Error(txt || res.statusText);
