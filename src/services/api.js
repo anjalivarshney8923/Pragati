@@ -83,6 +83,21 @@ export const complaintService = {
   updateComplaintStatus: async (id, status) => {
     const response = await api.put(`/officer/complaints/${id}/status`, { status });
     return response.data;
+  },
+  getNearbyComplaints: async (lat, lon, radius = 5) => {
+    const response = await api.get('/complaints/nearby', {
+      params: { latitude: lat, longitude: lon, radius }
+    });
+    return response.data;
+  }
+};
+
+export const geoService = {
+  geocodeAddress: async (address) => {
+    const response = await api.get('/geocode', {
+      params: { address }
+    });
+    return response.data;
   }
 };
 

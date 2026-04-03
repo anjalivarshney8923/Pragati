@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { MapPin, Navigation, Trash2, CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, Navigation, Trash2, AlertCircle } from 'lucide-react';
 import { complaintService } from '../../services/api';
 import InputField from '../ui/InputField';
 import TextArea from '../ui/TextArea';
@@ -23,6 +23,7 @@ const ComplaintForm = () => {
   const [submitted, setSubmitted] = useState(false);
   const [coordinates, setCoordinates] = useState({ lat: null, lng: null });
   const [isFetchingLocation, setIsFetchingLocation] = useState(false);
+  const [locationSuccess, setLocationSuccess] = useState(false);
   const [locationError, setLocationError] = useState('');
   const navigate = useNavigate();
 
@@ -48,6 +49,7 @@ const ComplaintForm = () => {
     });
     setImages([]);
     setCoordinates({ lat: null, lng: null });
+    setLocationSuccess(false);
     setLocationError('');
   };
 
@@ -59,55 +61,50 @@ const ComplaintForm = () => {
 
     setIsFetchingLocation(true);
     setLocationError('');
+    setLocationSuccess(false);
 
     navigator.geolocation.getCurrentPosition(
-      async (position) => {
+      (position) => {
         const { latitude, longitude } = position.coords;
+        const readableLocation = `Lat: ${latitude.toFixed(4)}, Lng: ${longitude.toFixed(4)}`;
+        
         setCoordinates({ lat: latitude, lng: longitude });
-
-        try {
-          // Reverse geocoding using OpenStreetMap Nominatim API
-          const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
-          const data = await response.json();
-          if (data && data.display_name) {
-             setFormData(prev => ({ ...prev, location: data.display_name }));
-          } else {
-             setFormData(prev => ({ ...prev, location: `Lat: ${latitude}, Lng: ${longitude}` }));
-          }
-        } catch (error) {
-          console.error("Error reverse geocoding:", error);
-          setFormData(prev => ({ ...prev, location: `Lat: ${latitude}, Lng: ${longitude}` }));
-        }
+        setFormData(prev => ({ ...prev, location: readableLocation }));
+        setLocationSuccess(true);
         setIsFetchingLocation(false);
       },
       (error) => {
         setIsFetchingLocation(false);
         if (error.code === error.PERMISSION_DENIED) {
-          setLocationError(t('raiseComplaint.locationPermissionDenied'));
+          setLocationError("Please allow location access to submit a complaint.");
         } else {
           setLocationError(t('raiseComplaint.locationFetchFailed'));
         }
-      }
+      },
+      { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
     );
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!coordinates.lat || !coordinates.lng) {
+      setLocationError("Please capture your current location before submitting.");
+      return;
+    }
+
     setIsLoading(true);
     
     try {
-  const payload = new FormData();
-  payload.append('title', formData.title);
-  payload.append('category', formData.category);
-  payload.append('description', formData.description);
-  // Backend requires location; if user didn't provide, send a default value
-  const locationToSend = formData.location && formData.location.trim() ? formData.location.trim() : 'Not specified';
-  payload.append('location', locationToSend);
-      if (coordinates.lat) payload.append('latitude', coordinates.lat);
-      if (coordinates.lng) payload.append('longitude', coordinates.lng);
+      const payload = new FormData();
+      payload.append('title', formData.title);
+      payload.append('category', formData.category);
+      payload.append('description', formData.description);
+      payload.append('location', formData.location);
+      payload.append('latitude', coordinates.lat);
+      payload.append('longitude', coordinates.lng);
 
       if (images && images.length > 0 && images[0].file) {
-        // Just upload the first image as backend accepts single MultipartFile
         payload.append('image', images[0].file);
       }
 
@@ -122,12 +119,11 @@ const ComplaintForm = () => {
 
     } catch (error) {
       console.error("Complaint Submission Failed: ", error);
-      // Provide clearer error messages for debugging (status + server message + field errors)
       const status = error?.response?.status;
       const data = error?.response?.data;
       const serverMsg = data?.message || data || error?.message;
       let alertMsg = serverMsg ? `${serverMsg} ${status ? `(status ${status})` : ''}` : t('raiseComplaint.failedToSubmit');
-      // If validation errors provided, append them
+      
       if (data && data.errors && typeof data.errors === 'object') {
         const fieldMsgs = Object.entries(data.errors).map(([k, v]) => `${k}: ${v}`);
         alertMsg += '\n' + fieldMsgs.join('\n');
@@ -152,7 +148,7 @@ const ComplaintForm = () => {
     );
   }
 
-  const isFormValid = formData.title.trim() && formData.category && formData.description.trim();
+  const isFormValid = formData.title.trim() && formData.category && formData.description.trim() && locationSuccess;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
@@ -193,34 +189,37 @@ const ComplaintForm = () => {
         />
 
         <div className="w-full">
-          <label htmlFor="location" className="block text-sm font-semibold text-slate-700 mb-2">
-            {t('raiseComplaint.location')}
+          <label className="block text-sm font-semibold text-slate-700 mb-2">
+            Complaint Location (GPS)
           </label>
-          <div className="flex gap-3">
-            <div className="relative flex-grow">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                <MapPin size={18} />
-              </div>
-              <input
-                type="text"
-                id="location"
-                className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-gov-blue/20 focus:border-gov-blue outline-none transition-all placeholder:text-slate-400 bg-white shadow-sm"
-                placeholder={t('raiseComplaint.locationPlaceholder')}
-                value={formData.location}
-                onChange={handleInputChange}
-              />
+          <div className="flex flex-col gap-3">
+            <div className="flex gap-3">
+              <Button 
+                type="button" 
+                variant={locationSuccess ? "outline" : "primary"} 
+                onClick={handleLocationClick} 
+                disabled={isFetchingLocation || isLoading} 
+                className={`flex-grow py-3 rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 ${locationSuccess ? 'border-green-500 text-green-700 bg-green-50' : ''}`}
+              >
+                <Navigation size={20} className={isFetchingLocation ? 'animate-pulse' : ''} />
+                {isFetchingLocation ? 'Accessing GPS...' : locationSuccess ? 'Location Detected Successfully' : 'Capture My Current Location'}
+              </Button>
             </div>
-            <Button type="button" variant="outline" onClick={handleLocationClick} disabled={isFetchingLocation} className="flex-shrink-0 px-4 whitespace-nowrap hidden sm:flex">
-              <Navigation size={18} className={`mr-2 ${isFetchingLocation ? 'animate-pulse text-gov-blue' : ''}`} />
-              {isFetchingLocation ? t('raiseComplaint.fetchingLocation') : t('raiseComplaint.useCurrentLocation')}
-            </Button>
-            <Button type="button" variant="outline" onClick={handleLocationClick} disabled={isFetchingLocation} className="flex-shrink-0 px-4 sm:hidden">
-              <Navigation size={18} className={isFetchingLocation ? 'animate-pulse text-gov-blue' : ''} />
-            </Button>
+            
+            {locationSuccess && (
+              <div className="flex items-center gap-2 text-green-600 bg-green-50 px-4 py-2 rounded-lg border border-green-200 shadow-sm">
+                <CheckCircle2 size={16} />
+                <span className="text-sm font-bold tracking-tight">Verified Coordinate: {formData.location}</span>
+              </div>
+            )}
+
+            {locationError && (
+              <div className="flex items-center gap-2 text-red-600 bg-red-50 px-4 py-2 rounded-lg border border-red-200 shadow-sm">
+                <AlertCircle size={16} />
+                <p className="text-xs font-medium">{locationError}</p>
+              </div>
+            )}
           </div>
-          {locationError && (
-            <p className="text-red-500 text-xs font-medium mt-1">{locationError}</p>
-          )}
         </div>
 
         <div className="pt-2">
@@ -241,7 +240,7 @@ const ComplaintForm = () => {
         <Button 
           type="submit" 
           variant="primary" 
-          disabled={!isFormValid}
+          disabled={!isFormValid || isLoading}
           isLoading={isLoading}
           className="w-full sm:w-auto px-8"
         >

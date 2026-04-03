@@ -3,6 +3,7 @@ package com.pragati.dto;
 import lombok.Data;
 import org.springframework.web.multipart.MultipartFile;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 @Data
 public class ComplaintRequestDTO {
@@ -18,8 +19,10 @@ public class ComplaintRequestDTO {
     @NotBlank(message = "Location is required")
     private String location;
 
+    @NotNull(message = "Latitude is required for nearby detection")
     private Double latitude;
 
+    @NotNull(message = "Longitude is required for nearby detection")
     private Double longitude;
 
     private MultipartFile image;

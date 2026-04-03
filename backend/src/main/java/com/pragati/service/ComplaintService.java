@@ -3,6 +3,7 @@ package com.pragati.service;
 import com.pragati.dto.ComplaintRequestDTO;
 import com.pragati.dto.ComplaintResponseDTO;
 import com.pragati.dto.ComplaintDTO;
+import com.pragati.dto.NearbyComplaintDTO;
 import com.pragati.entity.Complaint;
 import com.pragati.entity.ComplaintStatus;
 import com.pragati.entity.User;
@@ -90,6 +91,49 @@ public class ComplaintService {
             log.error("CRITICAL: Error in fetching officer complaints: {}", e.getMessage(), e);
             throw new RuntimeException("Backend database fetch failed: " + e.getMessage());
         }
+    }
+
+    @Transactional(readOnly = true)
+    public List<NearbyComplaintDTO> getNearbyComplaints(Double lat, Double lon, Double radius, String currentMobile) {
+        log.info("Fetching nearby complaints for current coordinate ({}, {}) with radius {} km", lat, lon, radius);
+        
+        // Fetch all complaints from DB
+        List<Complaint> allComplaints = complaintRepository.findAll();
+        
+        return allComplaints.stream()
+                .filter(c -> !c.getUser().getMobileNumber().equals(currentMobile)) // Exclude own
+                .filter(c -> c.getLatitude() != null && c.getLongitude() != null)  // Only those with coordinates
+                .map(c -> {
+                    double distance = calculateDistance(lat, lon, c.getLatitude(), c.getLongitude());
+                    return NearbyComplaintDTO.builder()
+                            .id(c.getId())
+                            .title(c.getTitle())
+                            .description(c.getDescription())
+                            .category(c.getCategory())
+                            .location(c.getLocation())
+                            .latitude(c.getLatitude())
+                            .longitude(c.getLongitude())
+                            .distance(Math.round(distance * 100.0) / 100.0) // Round to 2 decimal places
+                            .status(c.getStatus() != null ? c.getStatus().name() : "PENDING")
+                            .imageUrl(c.getImageUrl())
+                            .createdAt(c.getCreatedAt())
+                            .build();
+                })
+                .filter(dto -> dto.getDistance() <= radius) // Within radius
+                .sorted((a, b) -> Double.compare(a.getDistance(), b.getDistance())) // Nearest first
+                .limit(20) // Limit results
+                .collect(Collectors.toList());
+    }
+
+    private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+        final int R = 6371; // Earth radius in km
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLon = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                   Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
+                   Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
     }
 
     @Transactional

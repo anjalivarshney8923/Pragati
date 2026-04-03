@@ -3,6 +3,7 @@ package com.pragati.controller;
 import com.pragati.dto.ComplaintRequestDTO;
 import com.pragati.dto.ComplaintResponseDTO;
 import com.pragati.dto.ComplaintStatusUpdateDTO;
+import com.pragati.dto.NearbyComplaintDTO;
 import com.pragati.service.ComplaintService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +39,15 @@ public class ComplaintController {
     @GetMapping
     public ResponseEntity<List<ComplaintResponseDTO>> getAllComplaints() {
         return ResponseEntity.ok(complaintService.getAllComplaints());
+    }
+
+    @GetMapping("/nearby")
+    public ResponseEntity<List<NearbyComplaintDTO>> getNearbyComplaints(
+            @RequestParam Double latitude,
+            @RequestParam Double longitude,
+            @RequestParam(defaultValue = "5.0") Double radius) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        return ResponseEntity.ok(complaintService.getNearbyComplaints(latitude, longitude, radius, username));
     }
 
     @PutMapping("/{id}/status")
