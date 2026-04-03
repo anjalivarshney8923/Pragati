@@ -203,7 +203,7 @@ const Register = () => {
       try {
         const fd = new FormData();
         fd.append('aadhaar', aadhaarFile);
-        const res = await fetch('http://127.0.0.1:5001/extract_dob', { method: 'POST', body: fd });
+        const res = await fetch('http://127.0.0.1:5002/extract_dob', { method: 'POST', body: fd });
         if (res.ok) {
           const data = await res.json();
           if (data && data.dob) setValue('dob', data.dob);

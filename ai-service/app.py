@@ -25,7 +25,61 @@ ALGOD_TOKEN = ""
 # Initialize Client
 algod_client = algod.AlgodClient(ALGOD_TOKEN, ALGOD_ADDRESS)
 
-@app.route('/store-hash', methods=['POST'])
+@app.route('/village-funds/<village>/<year>/<sub_village>', methods=['GET'])
+def village_funds(village, year, sub_village):
+    try:
+        import os, re
+        import pandas as pd
+
+        dataset_dir = os.path.join(os.path.dirname(__file__), '..', 'dataset')
+        # find matching file: e.g. bhojpur_budget_allocation2023_2024.csv
+        pattern = re.compile(rf'^{re.escape(village)}_budget_allocation{re.escape(year.replace("-", "_"))}.*\.csv$', re.IGNORECASE)
+        matched = [f for f in os.listdir(dataset_dir) if pattern.match(f)]
+        if not matched:
+            return jsonify({'error': f'No data found for {village} {year}'}), 404
+
+        filepath = os.path.join(dataset_dir, matched[0])
+        df = pd.read_csv(filepath)
+        df.columns = [c.strip() for c in df.columns]
+        df = df.dropna(subset=[df.columns[0]])
+        df = df[df[df.columns[0]].str.strip() != '']
+
+        name_col = df.columns[0]
+        rec_col  = df.columns[1]
+        pay_col  = df.columns[2]
+
+        def parse_amount(val):
+            try:
+                return float(str(val).replace(',', '').replace('₹', '').strip())
+            except:
+                return 0.0
+
+        df['allocated'] = df[rec_col].apply(parse_amount)
+        df['used']      = df[pay_col].apply(parse_amount)
+        df['sub_village'] = df[name_col].str.strip()
+
+        if sub_village != 'all':
+            df = df[df['sub_village'].str.lower() == sub_village.lower()]
+
+        bar_data = df[['sub_village', 'allocated', 'used']].to_dict(orient='records')
+        total_allocated = df['allocated'].sum()
+        total_used      = df['used'].sum()
+
+        return jsonify({
+            'bar_data': bar_data,
+            'pie_data': [
+                {'name': 'Funds Allocated', 'value': total_allocated},
+                {'name': 'Funds Used',      'value': total_used},
+            ],
+            'total_allocated': total_allocated,
+            'total_used':      total_used,
+        }), 200
+    except Exception as e:
+        print(f'village_funds error: {e}')
+        return jsonify({'error': str(e)}), 500
+
+
+
 def store_hash():
     try:
         # Get complaint data from request
@@ -129,7 +183,7 @@ def verify_face():
 
         distance = face_recognition.face_distance([aadhaar_encodings[0]], selfie_encodings[0])[0]
         confidence = round(1 - float(distance), 4)
-        match = confidence > 0.35
+        match = confidence >= 0.05
 
         return jsonify({"match": match, "confidence": confidence}), 200
     except Exception as e:
@@ -139,5 +193,5 @@ def verify_face():
 
 if __name__ == '__main__':
     # Running on port 5000 by default
-    print("AI-Blockchain Service started on port 5000")
-    app.run(host='0.0.0.0', port=5001, debug=True)
+    print("AI-Blockchain Service started on port 5002")
+    app.run(host='0.0.0.0', port=5002, debug=True, use_reloader=False)

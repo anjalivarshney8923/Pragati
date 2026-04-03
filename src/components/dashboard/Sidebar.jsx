@@ -9,6 +9,8 @@ import {
   Landmark, 
   Bell, 
   HelpCircle,
+  Newspaper,
+  Scale,
   X
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -20,9 +22,11 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     { name: t('sidebar.dashboard'), path: '/dashboard', icon: <LayoutDashboard size={20} /> },
     { name: t('sidebar.raiseComplaint'), path: '/complaint', icon: <FileWarning size={20} /> },
     { name: t('sidebar.myComplaints'), path: '/dashboard/complaints', icon: <History size={20} /> },
+    { name: 'My Rights', path: '/dashboard/rights', icon: <Scale size={20} /> },
     { name: t('sidebar.villageFunds'), path: '/dashboard/funds', icon: <Wallet size={20} /> },
     { name: t('sidebar.expenditure'), path: '/dashboard/expenditure', icon: <ReceiptIndianRupee size={20} /> },
     { name: t('sidebar.schemes'), path: '/dashboard/schemes', icon: <Landmark size={20} /> },
+    { name: 'Recent Posts', path: '/dashboard/posts', icon: <Newspaper size={20} /> },
     { name: t('sidebar.notifications'), path: '/dashboard/notifications', icon: <Bell size={20} /> },
     { name: t('sidebar.helpSupport'), path: '/dashboard/support', icon: <HelpCircle size={20} /> },
   ];

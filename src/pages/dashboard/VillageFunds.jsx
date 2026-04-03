@@ -19,7 +19,7 @@ const VillageFunds = () => {
 
   const { t } = useTranslation();
   // Use Vite env var if provided, otherwise prefer IPv4 loopback to avoid macOS ::1 conflicts
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000';
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5001';
 
   useEffect(() => {
     fetchData();
@@ -29,7 +29,7 @@ const VillageFunds = () => {
     setLoading(true);
     setError(null);
     try {
-  const response = await axios.get(`${API_BASE}/village-funds/${selectedVillage}/${selectedYear}/${selectedSubVillage}`);
+      const response = await axios.get(`${API_BASE}/village-funds/${selectedVillage}/${selectedYear}/${selectedSubVillage}`);
       const fetchedData = response.data;
       // Translate pie data names
       if (fetchedData.pie_data) {

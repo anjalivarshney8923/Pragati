@@ -9,7 +9,7 @@ export default function FaceVerification({
     aadhaarFile: propAadhaarFile,
     aadhaarPreview: propAadhaarPreview,
 }) {
-    const CONFIDENCE_THRESHOLD = 0.35;
+    const CONFIDENCE_THRESHOLD = 0.05;
 
     const [aadhaar, setAadhaar] = useState(null);
     const [aadhaarPreview, setAadhaarPreview] = useState(null);
@@ -43,7 +43,7 @@ export default function FaceVerification({
             setStatus("Extracting DOB from Aadhaar...");
             const fd = new FormData();
             fd.append("image", file);
-            const res = await fetch("http://127.0.0.1:5001/extract_dob", { method: "POST", body: fd });
+            const res = await fetch("http://127.0.0.1:5002/extract_dob", { method: "POST", body: fd });
             if (!res.ok) {
                 setStatus("DOB extraction failed");
                 return null;
@@ -97,90 +97,90 @@ export default function FaceVerification({
     }, [propAadhaarFile, propAadhaarPreview]);
 
 
-        // verifies given aadhaar/selfie files with the AI service
-        const verifyFiles = async (aadhaarFileParam, selfieFileParam) => {
-            const fd = new FormData();
-            fd.append("aadhaar", aadhaarFileParam);
-            fd.append("selfie", selfieFileParam);
+    // verifies given aadhaar/selfie files with the AI service
+    const verifyFiles = async (aadhaarFileParam, selfieFileParam) => {
+        const fd = new FormData();
+        fd.append("aadhaar", aadhaarFileParam);
+        fd.append("selfie", selfieFileParam);
 
-            setLoading(true);
-            setResult(null);
-            setErrorMessage("");
-            setStatus("Uploading images to verification service...");
+        setLoading(true);
+        setResult(null);
+        setErrorMessage("");
+        setStatus("Uploading images to verification service...");
 
-            try {
-                const res = await fetch("http://127.0.0.1:5001/verify", { method: "POST", body: fd });
-                if (!res.ok) {
-                    const txt = await res.text();
-                    throw new Error(txt || res.statusText);
-                }
-                const data = await res.json();
-                setResult(data);
-                setStatus(`Verification complete. Confidence: ${data.confidence}`);
-                return data;
-            } catch (err) {
-                console.error("verifyFiles error", err);
-                setErrorMessage("Verification failed: " + (err?.message || "Unknown"));
-                setStatus("Verification failed");
-                throw err;
-            } finally {
-                setLoading(false);
+        try {
+            const res = await fetch("http://127.0.0.1:5002/verify", { method: "POST", body: fd });
+            if (!res.ok) {
+                const txt = await res.text();
+                throw new Error(txt || res.statusText);
             }
-        };
+            const data = await res.json();
+            setResult(data);
+            setStatus(`Verification complete. Confidence: ${data.confidence}`);
+            return data;
+        } catch (err) {
+            console.error("verifyFiles error", err);
+            setErrorMessage("Verification failed: " + (err?.message || "Unknown"));
+            setStatus("Verification failed");
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    };
 
-        // Auto-capture is handled inside the effect below to avoid recreating the function each render
+    // Auto-capture is handled inside the effect below to avoid recreating the function each render
 
-        // when component mounts or webcam becomes ready, schedule an automatic capture in 5s
-        useEffect(() => {
-            let timer = null;
-            // only auto-run if webcam ready and we have an Aadhaar (either prop or uploaded)
-            if (cameraReady && (propAadhaarFile || aadhaar)) {
-                // give user a short moment to see the UI
-                timer = setTimeout(() => {
-                    (async () => {
-                        try {
-                            setStatus("Auto-capturing selfie...");
-                            const aadhaarToUse = propAadhaarFile || aadhaar;
-                            if (!aadhaarToUse) {
-                                setStatus("No Aadhaar provided for automatic verification");
-                                return;
-                            }
-                            const imageSrc = webcamRef.current?.getScreenshot();
-                            if (!imageSrc) {
-                                setErrorMessage("Unable to capture image from webcam");
-                                return;
-                            }
-                            const selfieFile = dataURLtoFile(imageSrc, "selfie_auto.jpg");
-                            setSelfie(selfieFile);
-                            setSelfiePreview(imageSrc);
-
-                            const verifyData = await verifyFiles(aadhaarToUse, selfieFile);
-                            const conf = parseFloat(verifyData?.confidence);
-                            if (!Number.isNaN(conf) && conf > CONFIDENCE_THRESHOLD) {
-                                setStatus("Auto verification succeeded");
-                                setResult(verifyData);
-                                if (userId && backendBaseUrl) {
-                                    await uploadToBackend();
-                                }
-                                if (typeof onContinue === "function") {
-                                    onContinue(selfieFile, verifyData, { dob, dobVerified });
-                                } else if (typeof onCapture === "function") {
-                                    onCapture(selfieFile, { dob, dobVerified });
-                                }
-                            } else {
-                                setStatus("Auto verification failed or confidence too low");
-                            }
-                        } catch (e) {
-                            console.warn("auto capture flow failed", e);
+    // when component mounts or webcam becomes ready, schedule an automatic capture in 5s
+    useEffect(() => {
+        let timer = null;
+        // only auto-run if webcam ready and we have an Aadhaar (either prop or uploaded)
+        if (cameraReady && (propAadhaarFile || aadhaar)) {
+            // give user a short moment to see the UI
+            timer = setTimeout(() => {
+                (async () => {
+                    try {
+                        setStatus("Auto-capturing selfie...");
+                        const aadhaarToUse = propAadhaarFile || aadhaar;
+                        if (!aadhaarToUse) {
+                            setStatus("No Aadhaar provided for automatic verification");
+                            return;
                         }
-                    })();
-                }, 2500);
-                setStatus("Auto capture in 2.5 seconds...");
-            }
+                        const imageSrc = webcamRef.current?.getScreenshot();
+                        if (!imageSrc) {
+                            setErrorMessage("Unable to capture image from webcam");
+                            return;
+                        }
+                        const selfieFile = dataURLtoFile(imageSrc, "selfie_auto.jpg");
+                        setSelfie(selfieFile);
+                        setSelfiePreview(imageSrc);
+
+                        const verifyData = await verifyFiles(aadhaarToUse, selfieFile);
+                        const conf = parseFloat(verifyData?.confidence);
+                        if (!Number.isNaN(conf) && conf > CONFIDENCE_THRESHOLD) {
+                            setStatus("Auto verification succeeded");
+                            setResult(verifyData);
+                            if (userId && backendBaseUrl) {
+                                await uploadToBackend();
+                            }
+                            if (typeof onContinue === "function") {
+                                onContinue(selfieFile, verifyData, { dob, dobVerified });
+                            } else if (typeof onCapture === "function") {
+                                onCapture(selfieFile, { dob, dobVerified });
+                            }
+                        } else {
+                            setStatus("Auto verification failed or confidence too low");
+                        }
+                    } catch (e) {
+                        console.warn("auto capture flow failed", e);
+                    }
+                })();
+            }, 2500);
+            setStatus("Auto capture in 2.5 seconds...");
+        }
         return () => {
-                if (timer) clearTimeout(timer);
-            };
-        }, [cameraReady, propAadhaarFile, aadhaar]);
+            if (timer) clearTimeout(timer);
+        };
+    }, [cameraReady, propAadhaarFile, aadhaar]);
 
 
     useEffect(() => {

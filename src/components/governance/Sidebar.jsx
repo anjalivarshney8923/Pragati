@@ -7,7 +7,7 @@ import {
   IndianRupee, 
   BarChart3, 
   Bell, 
-  Settings, 
+  UserCircle, 
   LogOut,
   ChevronLeft,
   Menu,
@@ -24,7 +24,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
     { name: 'Funds & Schemes', icon: IndianRupee, path: '/governance/funds' },
     { name: 'Reports', icon: BarChart3, path: '/governance/reports' },
     { name: 'Notifications', icon: Bell, path: '/governance/notifications' },
-    { name: 'Settings', icon: Settings, path: '/governance/settings' },
+    { name: 'Profile', icon: UserCircle, path: '/governance/settings' },
   ];
 
   const handleLogout = () => {

@@ -15,6 +15,8 @@ import MyComplaints from './pages/dashboard/MyComplaints';
 import VillageFunds from './pages/dashboard/VillageFunds';
 import GovernmentSchemes from './pages/dashboard/GovernmentSchemes';
 import Expenditure from './pages/dashboard/Expenditure';
+import RecentPosts from './pages/dashboard/RecentPosts';
+import MyRights from './pages/dashboard/MyRights';
 
 // Governance Dashboard Components
 import GovernanceLayout from './layouts/GovernanceLayout';
@@ -25,6 +27,8 @@ import Funds from './pages/governance/Funds';
 import Reports from './pages/governance/Reports';
 import NotificationsBoard from './pages/governance/Notifications';
 import Settings from './pages/governance/Settings';
+import CreatePost from './pages/governance/CreatePost';
+import MyPosts from './pages/governance/MyPosts';
 
 // Placeholders for undefined pages
 const Placeholder = ({ title }) => (
@@ -51,9 +55,11 @@ function App() {
             <Route path="/dashboard" element={<DashboardOverview />} />
             <Route path="/complaint" element={<RaiseComplaint />} />
             <Route path="/dashboard/complaints" element={<MyComplaints />} />
+            <Route path="/dashboard/rights" element={<MyRights />} />
             <Route path="/dashboard/funds" element={<VillageFunds />} />
             <Route path="/dashboard/expenditure" element={<Expenditure />} />
             <Route path="/dashboard/schemes" element={<GovernmentSchemes />} />
+            <Route path="/dashboard/posts" element={<RecentPosts />} />
             <Route path="/dashboard/notifications" element={<Placeholder title="Notifications" />} />
             <Route path="/dashboard/support" element={<Placeholder title="Help & Support" />} />
           </Route>
@@ -68,6 +74,8 @@ function App() {
              <Route path="reports" element={<Reports />} />
              <Route path="notifications" element={<NotificationsBoard />} />
              <Route path="settings" element={<Settings />} />
+             <Route path="posts/new" element={<CreatePost />} />
+             <Route path="posts/my" element={<MyPosts />} />
           </Route>
         </Routes>
         <Chatbot />

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   User, 
   Settings as SettingsIcon, 
@@ -13,18 +14,21 @@ import {
   MapPin,
   CheckCircle2,
   ChevronRight,
-  Monitor
+  Monitor,
+  FileText,
+  Plus
 } from 'lucide-react';
 
 const Settings = () => {
   const officer = JSON.parse(localStorage.getItem('officer') || '{}');
+  const navigate = useNavigate();
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-28">
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-           <h1 className="text-3xl font-extrabold text-[#1E3A8A] uppercase tracking-tighter">Account Administration</h1>
+           <h1 className="text-3xl font-extrabold text-[#1E3A8A] uppercase tracking-tighter">Profile</h1>
            <p className="text-slate-500 font-bold text-xs uppercase tracking-widest mt-1">Manage official profile, security keys and portal preferences</p>
         </div>
         <div className="flex items-center gap-3">
@@ -93,6 +97,41 @@ const Settings = () => {
 
         {/* Right Column: Settings Tabs */}
         <div className="col-span-1 lg:col-span-2 space-y-10">
+           {/* Section: Posts */}
+           <div className="bg-white p-10 rounded-[3.5rem] shadow-sm border border-slate-100 group relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-10 opacity-5 group-hover:opacity-10 transition-opacity">
+                 <FileText className="w-24 h-24 text-blue-600" />
+              </div>
+              <div className="flex items-center justify-between mb-6 pb-6 border-b border-slate-50 relative z-10">
+                 <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shadow-lg shadow-blue-50">
+                       <FileText className="w-6 h-6" />
+                    </div>
+                    <div>
+                       <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest">Pradhaan Posts</h3>
+                       <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1 italic leading-none">Publish updates, before/after proofs and announcements</p>
+                    </div>
+                 </div>
+                 <div className="flex items-center gap-3">
+                    <button
+                       onClick={() => navigate('/governance/posts/new')}
+                       className="flex items-center gap-2 px-6 py-3 bg-[#1E3A8A] text-white rounded-2xl shadow-xl shadow-blue-100 font-black uppercase tracking-widest text-[10px] hover:bg-[#1a3278] transition-all"
+                    >
+                       <Plus className="w-4 h-4" />
+                       Create New Post
+                    </button>
+                    <button
+                       onClick={() => navigate('/governance/posts/my')}
+                       className="flex items-center gap-2 px-6 py-3 bg-slate-100 text-slate-700 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-slate-200 transition-all border border-slate-200"
+                    >
+                       <FileText className="w-4 h-4" />
+                       My Posts
+                    </button>
+                 </div>
+              </div>
+              <p className="text-xs text-slate-400 font-semibold relative z-10">No posts yet. Click <span className="text-[#1E3A8A] font-black">Create New Post</span> to publish your first update.</p>
+           </div>
+
            {/* Section 1: Security Controls */}
            <div className="bg-white p-10 rounded-[3.5rem] shadow-sm border border-slate-100 relative group overflow-hidden">
               <div className="absolute top-0 right-0 p-10 opacity-5 group-hover:opacity-10 transition-opacity">
