@@ -201,6 +201,13 @@
     "fundsAllocated": "Funds Allocated",
     "fundsUsed": "Funds Used"
   },
+  "chatbot": {
+    "title": "Pragati Assistant",
+    "greeting": "Hello! I'm the Pragati assistant. Ask me about complaints, village funds, schemes, or registration.",
+    "placeholder": "Type your question...",
+    "typing": "Typing...",
+    "error": "Sorry, I couldn't connect. Please try again."
+  },
   "governmentSchemes": {
     "title": "Government Schemes",
     "subtitle": "Track government scheme funds allocation and usage",

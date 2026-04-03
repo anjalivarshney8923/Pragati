@@ -169,5 +169,65 @@ def extract_dob():
         return jsonify({'dob': None, 'error': str(e)}), 200
 
 
+@app.route('/chatbot', methods=['POST'])
+def chatbot():
+    data = request.get_json()
+    message = (data.get('message', '') or '').lower().strip()
+    lang = (data.get('lang', 'en') or 'en').lower()
+
+    responses = {
+        'en': {
+            'complaint': "To raise a complaint, go to 'Raise Complaint' in the sidebar. You can submit issues about water, electricity, roads, or sanitation anonymously.",
+            'my complaint': "Track your complaints under 'My Complaints' in the sidebar. Each complaint shows status: Pending, In Progress, or Resolved.",
+            'status': "Check complaint status under 'My Complaints'. Statuses: Pending, In Progress, or Resolved.",
+            'fund': "Village fund details are under 'Village Funds'. View allocated vs used funds by village and year.",
+            'expenditure': "Track village spending under 'Expenditure'. It shows a breakdown of spending categories.",
+            'scheme': "Government schemes are listed under 'Government Schemes'. Filter by state, district, village, and year.",
+            'register': "To register, click 'Register' on the login page. You need your Aadhaar card, a selfie, and mobile number for OTP.",
+            'login': "Use your registered mobile number and password to log in.",
+            'aadhaar': "Aadhaar is required during registration for identity verification via face matching.",
+            'otp': "An OTP is sent to your registered mobile number during registration.",
+            'panchayat': "Pragati is a digital platform for Gram Panchayat services: complaints, funds, and government schemes.",
+            'help': "I can help with: complaints, village funds, expenditure, government schemes, registration, and login.",
+            'hello': "Hello! I'm the Pragati assistant. How can I help you with village services today?",
+            'hi': "Hello! I'm the Pragati assistant. How can I help you with village services today?",
+            'namaste': "Namaste! I'm the Pragati assistant. How can I help you today?",
+            'default': "I can help with Pragati services like complaints, village funds, government schemes, and registration. Please ask a specific question."
+        },
+        'hi': {
+            'शिकायत': "शिकायत दर्ज करने के लिए साइडबार में 'शिकायत दर्ज करें' पर जाएं। पानी, बिजली, सड़क या स्वच्छता से जुड़ी समस्याएं गुमनाम रूप से दर्ज करें।",
+            'complaint': "शिकायत दर्ज करने के लिए साइडबार में 'शिकायत दर्ज करें' पर जाएं।",
+            'स्थिति': "'मेरी शिकायतें' में जाकर शिकायत की स्थिति देखें: लंबित, प्रगति में, या हल।",
+            'निधि': "'ग्राम निधि' में गांव के आवंटित और उपयोग किए गए धन की जानकारी देखें।",
+            'fund': "'ग्राम निधि' में गांव के आवंटित और उपयोग किए गए धन की जानकारी देखें।",
+            'व्यय': "'व्यय' सेक्शन में देखें कि गांव का पैसा कहां खर्च हुआ।",
+            'योजना': "'सरकारी योजनाएं' में सभी योजनाओं की जानकारी मिलेगी। राज्य, जिला और गांव के अनुसार फ़िल्टर करें।",
+            'scheme': "'सरकारी योजनाएं' में सभी योजनाओं की जानकारी मिलेगी।",
+            'पंजीकरण': "पंजीकरण के लिए 'यहाँ पंजीकरण करें' पर क्लिक करें। आधार कार्ड, सेल्फी और मोबाइल नंबर की जरूरत होगी।",
+            'register': "पंजीकरण के लिए 'यहाँ पंजीकरण करें' पर क्लिक करें।",
+            'लॉगिन': "अपने पंजीकृत मोबाइल नंबर और पासवर्ड से लॉगिन करें।",
+            'आधार': "पंजीकरण के दौरान पहचान सत्यापन के लिए आधार कार्ड आवश्यक है।",
+            'ओटीपी': "पंजीकरण के दौरान आपके मोबाइल पर OTP भेजा जाएगा।",
+            'नमस्ते': "नमस्ते! मैं प्रगति सहायक हूं। आज मैं आपकी कैसे मदद कर सकता हूं?",
+            'hello': "नमस्ते! मैं प्रगति सहायक हूं।",
+            'hi': "नमस्ते! मैं प्रगति सहायक हूं।",
+            'मदद': "मैं शिकायत, ग्राम निधि, व्यय, सरकारी योजनाएं और पंजीकरण में मदद कर सकता हूं।",
+            'default': "मैं प्रगति सेवाओं जैसे शिकायत, ग्राम निधि, सरकारी योजनाएं और पंजीकरण में मदद कर सकता हूं।"
+        }
+    }
+
+    lang_responses = responses.get(lang, responses['en'])
+    reply = None
+    for keyword, response in lang_responses.items():
+        if keyword != 'default' and keyword in message:
+            reply = response
+            break
+
+    if not reply:
+        reply = lang_responses.get('default', responses['en']['default'])
+
+    return jsonify({'reply': reply})
+
+
 if __name__ == '__main__':
     app.run(port=5000)

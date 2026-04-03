@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Chatbot from './components/Chatbot';
 import LandingPage from './pages/LandingPage';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -69,6 +70,7 @@ function App() {
              <Route path="settings" element={<Settings />} />
           </Route>
         </Routes>
+        <Chatbot />
       </div>
     </Router>
   );
