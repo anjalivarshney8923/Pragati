@@ -54,4 +54,15 @@ public class Complaint {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    @Column(name = "blockchain_txn_id")
+    private String blockchainTxnId;
+
+    public String getBlockchainTxnId() {
+        return blockchainTxnId;
+    }
+
+    public void setBlockchainTxnId(String blockchainTxnId) {
+        this.blockchainTxnId = blockchainTxnId;
+    }
 }

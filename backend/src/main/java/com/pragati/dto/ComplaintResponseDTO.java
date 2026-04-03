@@ -18,4 +18,5 @@ public class ComplaintResponseDTO {
     private String status;
     private LocalDateTime createdAt;
     private String userFullName;
+    private String blockchainTxnId;
 }

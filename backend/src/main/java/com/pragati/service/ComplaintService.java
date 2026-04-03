@@ -24,6 +24,7 @@ public class ComplaintService {
     private final ComplaintRepository complaintRepository;
     private final UserRepository userRepository;
     private final FileStorageService fileStorageService;
+    private final BlockchainService blockchainService;
 
     @Transactional
     public ComplaintResponseDTO createComplaint(ComplaintRequestDTO request, String mobileNumber) {
@@ -36,6 +37,9 @@ public class ComplaintService {
             imageUrl = fileStorageService.saveFile(request.getImage());
         }
 
+        // Integrate Blockchain Service
+        String txnId = blockchainService.getBlockchainTxnId(request.getDescription());
+
         Complaint complaint = Complaint.builder()
                 .title(request.getTitle())
                 .description(request.getDescription())
@@ -45,6 +49,7 @@ public class ComplaintService {
                 .longitude(request.getLongitude())
                 .imageUrl(imageUrl)
                 .user(user)
+                .blockchainTxnId(txnId)
                 .build();
 
         Complaint saved = complaintRepository.save(complaint);
@@ -118,6 +123,7 @@ public class ComplaintService {
                 .status(c.getStatus() != null ? c.getStatus().name() : "PENDING")
                 .createdAt(c.getCreatedAt())
                 .attachmentPath(attachmentUrl)
+                .blockchainTxnId(c.getBlockchainTxnId())
                 .build();
     }
 
@@ -143,6 +149,7 @@ public class ComplaintService {
                 .status(c.getStatus() != null ? c.getStatus().name() : "PENDING")
                 .createdAt(c.getCreatedAt())
                 .userFullName(userFullName)
+                .blockchainTxnId(c.getBlockchainTxnId())
                 .build();
     }
 }

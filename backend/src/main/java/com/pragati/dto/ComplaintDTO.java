@@ -19,4 +19,5 @@ public class ComplaintDTO {
     private String location;
     private String attachmentPath;
     private LocalDateTime createdAt;
+    private String blockchainTxnId;
 }

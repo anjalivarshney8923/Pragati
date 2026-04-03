@@ -1,173 +1,71 @@
+import hashlib
+import json
 from flask import Flask, request, jsonify
-import face_recognition
-from flask_cors import CORS
-from village_funds import get_village_funds_data
-from schemes_funds import get_schemes_funds_data
-
-# OCR dependencies
-import io
-import re
-from datetime import datetime
-try:
-    from PIL import Image
-    import pytesseract
-    import cv2
-    import numpy as np
-    OCR_AVAILABLE = True
-except Exception:
-    # OCR libs may not be installed in every environment; handle gracefully
-    OCR_AVAILABLE = False
+from algosdk.v2client import algod
+from algosdk import transaction, mnemonic
 
 app = Flask(__name__)
-CORS(app)
 
+# --- YOUR CONFIGURATION ---
+ALGO_ADDRESS = "XFH3YTGVZ3HET7Z3Z2K5JB2GCXCA63J2EWRBGOR2N3XPAX3B56ATB2BCNM"
+ALGO_MNEMONIC = "jewel ivory manage spirit twice behave orange toy floor cigar step kitten capital decorate slot equip siege work car glove deposit risk until above empty"
 
-@app.route("/verify", methods=["POST"])
-def verify():
+# AlgoNode Public TestNet API
+ALGOD_ADDRESS = "https://testnet-api.algonode.cloud"
+ALGOD_TOKEN = "" 
+
+# Initialize Client
+algod_client = algod.AlgodClient(ALGOD_TOKEN, ALGOD_ADDRESS)
+
+@app.route('/store-hash', methods=['POST'])
+def store_hash():
     try:
-        # load images from the uploaded files
-        img1 = face_recognition.load_image_file(request.files["aadhaar"])
-        img2 = face_recognition.load_image_file(request.files["selfie"])
+        # Get complaint data from request
+        data = request.json
+        if not data:
+            return jsonify({"error": "No data provided"}), 400
 
-        # extract face encodings
-        enc1 = face_recognition.face_encodings(img1)
-        enc2 = face_recognition.face_encodings(img2)
+        # 1. Generate SHA-256 Hash
+        # Ensure consistent ordering so the same data always generates the same hash
+        data_string = json.dumps(data, sort_keys=True)
+        complaint_hash = hashlib.sha256(data_string.encode()).hexdigest()
 
-        if not enc1 or not enc2:
-            return jsonify({"error": "No face detected in one or both images"}), 400
+        # 2. Prepare Transaction
+        params = algod_client.suggested_params()
+        
+        # We send 0 ALGO to ourselves just to store the hash in the "note" field
+        # The note field must be bytes
+        note = complaint_hash.encode() 
+        
+        unsigned_txn = transaction.PaymentTxn(
+            sender=ALGO_ADDRESS,
+            sp=params,
+            receiver=ALGO_ADDRESS,
+            amt=0,
+            note=note
+        )
 
-        enc1 = enc1[0]
-        enc2 = enc2[0]
+        # 3. Sign the transaction
+        private_key = mnemonic.to_private_key(ALGO_MNEMONIC)
+        signed_txn = unsigned_txn.sign(private_key)
 
-        distance = face_recognition.face_distance([enc1], enc2)[0]
+        # 4. Send to Network
+        tx_id = algod_client.send_transaction(signed_txn)
+
+        print(f"Transaction sent! ID: {tx_id}")
 
         return jsonify({
-            "match": bool(distance < 0.5),
-            "confidence": float(1 - distance)
-        })
+            "status": "success",
+            "blockchainTxnId": tx_id,
+            "hash": complaint_hash,
+            "explorerUrl": f"https://testnet.algoscan.app/tx/{tx_id}"
+        }), 200
 
     except Exception as e:
+        print(f"Blockchain Error: {str(e)}")
         return jsonify({"error": str(e)}), 500
-
-
-@app.route("/village-funds/<village>/<year>/<sub_village>", methods=["GET"])
-def village_funds(village, year, sub_village):
-    try:
-        data = get_village_funds_data(village, year, sub_village)
-        return jsonify(data)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-
-@app.route("/schemes-funds", methods=["GET"])
-def schemes_funds():
-    try:
-        # Get query parameters
-        state = request.args.get('state', 'all')
-        district = request.args.get('district', 'all')
-        village = request.args.get('village', 'all')
-        scheme = request.args.get('scheme', 'all')
-        year = request.args.get('year', 'all')
-        work_type = request.args.get('work_type', 'all')
-
-        data = get_schemes_funds_data(state, district, village, scheme, year, work_type)
-        return jsonify(data)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-
-
-@app.route('/extract_dob', methods=['POST'])
-def extract_dob():
-    """Accepts an uploaded Aadhaar image (form field 'aadhaar') and returns a best-effort DOB in YYYY-MM-DD format.
-
-    Returns JSON: { dob: 'YYYY-MM-DD' } or { dob: None, error: 'message' }
-    """
-    if not OCR_AVAILABLE:
-        return jsonify({'dob': None, 'error': 'OCR libraries not installed on server (pytesseract/opencv/pillow)'}), 200
-
-    if 'aadhaar' not in request.files:
-        return jsonify({'dob': None, 'error': 'No file uploaded under field "aadhaar"'}), 200
-
-    file = request.files['aadhaar']
-    try:
-        img_bytes = file.read()
-        pil_img = Image.open(io.BytesIO(img_bytes)).convert('RGB')
-
-        # Convert to OpenCV image
-        cv_img = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
-
-        # Preprocess: grayscale, bilateral filter, adaptive threshold
-        gray = cv2.cvtColor(cv_img, cv2.COLOR_BGR2GRAY)
-        gray = cv2.bilateralFilter(gray, 9, 75, 75)
-        # Use adaptive threshold to make text clearer
-        th = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-                                   cv2.THRESH_BINARY, 11, 2)
-
-        # Run OCR
-        try:
-            ocr_config = '--psm 6'
-            text = pytesseract.image_to_string(th, config=ocr_config)
-        except Exception as e:
-            # As a fallback, run OCR on the original PIL image
-            text = pytesseract.image_to_string(pil_img)
-
-        # Normalize text
-        normalized = text.replace('\n', ' ').replace('\r', ' ')
-
-        # Common DOB patterns: dd/mm/yyyy, dd-mm-yyyy, dd mm yyyy, yyyy-mm-dd
-        date_patterns = [r'(\d{2}[\/\-]\d{2}[\/\-]\d{4})',
-                         r'(\d{2}\s\d{2}\s\d{4})',
-                         r'(\d{4}[\/\-]\d{2}[\/\-]\d{2})',
-                         r'(\d{2}[\/\-]\d{4})']
-
-        candidate = None
-        for pat in date_patterns:
-            m = re.search(pat, normalized)
-            if m:
-                candidate = m.group(1)
-                break
-
-        dob_iso = None
-        if candidate:
-            # Try multiple parse formats
-            formats = ['%d/%m/%Y', '%d-%m-%Y', '%d %m %Y', '%Y-%m-%d', '%d/%Y-%m']
-            parsed = None
-            # Clean candidate
-            cand = candidate.strip()
-            cand = cand.replace('.', '/')
-            # Try common separators
-            for fmt in ['%d/%m/%Y', '%d-%m-%Y', '%d %m %Y', '%Y-%m-%d']:
-                try:
-                    parsed = datetime.strptime(cand, fmt)
-                    break
-                except Exception:
-                    continue
-
-            if parsed:
-                dob_iso = parsed.strftime('%Y-%m-%d')
-
-        # Additionally try to find 'DOB' label followed by date
-        if not dob_iso:
-            m = re.search(r'DOB\s*[:\-]?\s*(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})', text, flags=re.IGNORECASE)
-            if m:
-                cand = m.group(1)
-                # Normalize 2-digit years to 4-digit (assume 19xx/20xx heuristics)
-                parts = re.split('[\/\-]', cand)
-                try:
-                    if len(parts[2]) == 2:
-                        year = int(parts[2])
-                        year = 1900 + year if year > 30 else 2000 + year
-                        parts[2] = str(year)
-                    parsed = datetime.strptime('/'.join(parts), '%d/%m/%Y')
-                    dob_iso = parsed.strftime('%Y-%m-%d')
-                except Exception:
-                    pass
-
-        return jsonify({'dob': dob_iso}), 200
-    except Exception as e:
-        return jsonify({'dob': None, 'error': str(e)}), 200
-
 
 if __name__ == '__main__':
-    app.run(port=5000)
+    # Running on port 5000 by default
+    print("AI-Blockchain Service started on port 5000")
+    app.run(host='0.0.0.0', port=5000, debug=True)

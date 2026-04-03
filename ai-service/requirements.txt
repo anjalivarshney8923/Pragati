@@ -6,6 +6,8 @@ pytesseract
 Pillow
 opencv-python
 numpy
+py-algorand-sdk
+python-dotenv
 
 
 # Note: face_recognition requires dlib and CMake; install system deps first.
