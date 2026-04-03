@@ -13,7 +13,7 @@ import java.util.Map;
 @Slf4j
 public class BlockchainService {
 
-    private final String FLASK_API_URL = "http://127.0.0.1:5000/store-hash";
+    private final String FLASK_API_URL = "http://127.0.0.1:5001/store-hash";
     private final RestTemplate restTemplate = new RestTemplate();
 
     public String getBlockchainTxnId(String complaintDescription) {
