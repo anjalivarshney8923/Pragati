@@ -20,7 +20,6 @@ import GovernanceLayout from './layouts/GovernanceLayout';
 import Overview from './pages/governance/Overview';
 import Complaints from './pages/governance/Complaints';
 import Citizens from './pages/governance/Citizens';
-import Approvals from './pages/governance/Approvals';
 import Funds from './pages/governance/Funds';
 import Reports from './pages/governance/Reports';
 import NotificationsBoard from './pages/governance/Notifications';
@@ -64,7 +63,6 @@ function App() {
              <Route path="overview" element={<Overview />} />
              <Route path="complaints" element={<Complaints />} />
              <Route path="citizens" element={<Citizens />} />
-             <Route path="approvals" element={<Approvals />} />
              <Route path="funds" element={<Funds />} />
              <Route path="reports" element={<Reports />} />
              <Route path="notifications" element={<NotificationsBoard />} />
