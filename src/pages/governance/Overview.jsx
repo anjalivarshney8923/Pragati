@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Users, 
   MessageSquare, 
@@ -10,18 +10,20 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { 
-  LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell 
+  LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Legend
 } from 'recharts';
 import DashboardCard from '../../components/governance/DashboardCard';
 import StatusBadge from '../../components/governance/StatusBadge';
 
+const crore = 10_000_000;
+
 const overviewData = [
-  { name: 'Jan', complaints: 45, funds: 2.1 },
-  { name: 'Feb', complaints: 52, funds: 3.5 },
-  { name: 'Mar', complaints: 38, funds: 1.8 },
-  { name: 'Apr', complaints: 65, funds: 4.2 },
-  { name: 'May', complaints: 48, funds: 2.9 },
-  { name: 'Jun', complaints: 59, funds: 5.1 },
+  { name: 'Jan', complaints: 45 },
+  { name: 'Feb', complaints: 52 },
+  { name: 'Mar', complaints: 38 },
+  { name: 'Apr', complaints: 65 },
+  { name: 'May', complaints: 48 },
+  { name: 'Jun', complaints: 59 },
 ];
 
 const recentComplaints = [
@@ -31,6 +33,33 @@ const recentComplaints = [
 ];
 
 const Overview = () => {
+  const [schemeData, setSchemeData] = useState([]);
+  const [totalAllocated, setTotalAllocated] = useState('...');
+
+  useEffect(() => {
+    fetch('/data/up_large_dataset.csv')
+      .then(r => r.text())
+      .then(text => {
+        const rows = text.trim().split('\n').slice(1).map(l => {
+          const [, , , scheme, allocated_fund, used_fund] = l.split(',');
+          return { scheme, allocated: parseInt(allocated_fund), used: parseInt(used_fund) };
+        });
+        const map = {};
+        rows.forEach(r => {
+          if (!map[r.scheme]) map[r.scheme] = { allocated: 0, used: 0 };
+          map[r.scheme].allocated += r.allocated;
+          map[r.scheme].used += r.used;
+        });
+        const total = Object.values(map).reduce((a, v) => a + v.allocated, 0);
+        setTotalAllocated((total / crore).toFixed(1));
+        setSchemeData(Object.entries(map).map(([name, v]) => ({
+          name,
+          Allocated: parseFloat((v.allocated / crore).toFixed(1)),
+          Used: parseFloat((v.used / crore).toFixed(1)),
+        })));
+      });
+  }, []);
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* Page Header */}
@@ -79,7 +108,7 @@ const Overview = () => {
         />
         <DashboardCard 
           title="Funds Allocated" 
-          value="₹5.2 Cr" 
+          value={`₹${totalAllocated} Cr`}
           icon={IndianRupee} 
           trend="up" 
           trendValue="+15%" 
@@ -136,19 +165,18 @@ const Overview = () => {
           </div>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={overviewData}>
+              <BarChart data={schemeData} barCategoryGap="30%">
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 700}} dy={10} />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 9, fontWeight: 700}} dy={10} />
                 <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 700}} dx={-10} />
-                <Tooltip 
+                <Tooltip
                   cursor={{fill: '#f8fafc'}}
                   contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)', padding: '12px' }}
+                  formatter={(val) => [`₹${val} Cr`]}
                 />
-                <Bar dataKey="funds" radius={[6, 6, 0, 0]} animationDuration={2000}>
-                   {overviewData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={index === 5 ? '#FF9933' : '#1E3A8A'} />
-                   ))}
-                </Bar>
+                <Legend wrapperStyle={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' }} />
+                <Bar dataKey="Allocated" fill="#1E3A8A" radius={[6, 6, 0, 0]} animationDuration={2000} />
+                <Bar dataKey="Used" fill="#FF9933" radius={[6, 6, 0, 0]} animationDuration={2000} />
               </BarChart>
             </ResponsiveContainer>
           </div>

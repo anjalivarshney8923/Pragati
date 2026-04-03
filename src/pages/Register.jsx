@@ -7,7 +7,7 @@ import { authService } from '../services/api';
 // import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 // import { auth } from '../config/firebase';
 import {
-  Building2, User, Phone, Mail, Lock,
+  Building2, User, Phone, Lock,
   MapPin, CheckCircle, Calendar,
   ShieldCheck, ScanFace, ChevronRight, ChevronLeft,
   Smartphone
@@ -33,10 +33,7 @@ const Register = () => {
 
   const STEPS = [
     t('register.steps.basicInfo'),
-    t('register.steps.address'),
     t('register.steps.aadhaarUpload'),
-    t('register.steps.faceScan'),
-    t('register.steps.ageCheck'),
     t('register.steps.otp'),
     t('register.steps.review')
   ];
@@ -53,6 +50,9 @@ const Register = () => {
   const [selectedState, setSelectedState] = useState('');
   const [selectedDistrict, setSelectedDistrict] = useState('');
   const [selectedVillage, setSelectedVillage] = useState('');
+
+  // Sub-stage for step 2 sequential flow (0=aadhaar upload, 1=doc accepted, 2=face scan, 3=face verified, 4=age check)
+  const [subStage, setSubStage] = useState(0);
 
   // Age state mock
   const [ageVerified, setAgeVerified] = useState(false);
@@ -82,17 +82,14 @@ const Register = () => {
     return () => clearInterval(interval);
   }, [timer]);
 
-  // Cleanup object URLs on unmount
+  // Cleanup face blob URL on unmount
   useEffect(() => {
     return () => {
-      if (aadhaarPreview && aadhaarPreview.startsWith('blob:')) {
-        URL.revokeObjectURL(aadhaarPreview);
-      }
       if (facePreview && facePreview.startsWith('blob:')) {
         URL.revokeObjectURL(facePreview);
       }
     };
-  }, []); // Empty dependency array - only run on unmount
+  }, []);
 
   // Handle cascading dropdowns
   useEffect(() => {
@@ -141,30 +138,23 @@ const Register = () => {
     let fieldsToValidate = [];
     switch (currentStep) {
       case 1:
-        fieldsToValidate = ['fullName', 'mobile', 'email', 'password', 'confirmPassword'];
+        fieldsToValidate = ['fullName', 'mobile', 'password', 'confirmPassword', 'state', 'district', 'village', 'panchayat'];
         break;
       case 2:
-        fieldsToValidate = ['state', 'district', 'village', 'panchayat'];
-        break;
-      case 3:
         if (!aadhaarVerified) {
           alert("Upload Aadhaar first");
           return;
         }
-        break;
-      case 4:
         if (!faceImage) {
           alert("Please capture face first");
           return;
         }
-        break;
-      case 5:
         if (!ageVerified) {
           alert("Verify age first");
           return;
         }
         break;
-      case 6:
+      case 3:
         if (!otpVerified) {
           alert("Verify OTP first");
           return;
@@ -181,7 +171,7 @@ const Register = () => {
       }
     }
 
-    if (currentStep < 7) {
+    if (currentStep < 4) {
       setCurrentStep(prev => prev + 1);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -189,6 +179,18 @@ const Register = () => {
 
   const handlePrev = () => {
     if (currentStep > 1) {
+      if (currentStep === 3) {
+        // reset step 2 sub-flow so user can redo it
+        setSubStage(0);
+        setAadhaarVerified(false);
+        setAadhaarFile(null);
+        setAadhaarPreview(null);
+        setFaceImage(null);
+        setFacePreview(null);
+        setFaceVerified(false);
+        setAgeVerified(false);
+        setAgeYears(null);
+      }
       setCurrentStep(prev => prev - 1);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -215,7 +217,10 @@ const Register = () => {
           // Simulate server-side upload/verification success
           setTimeout(() => {
             setAadhaarVerified(true);
+            setSubStage(1); // show doc accepted
             setIsLoading(false);
+            // after 1s auto-open camera
+            setTimeout(() => setSubStage(2), 1000);
           }, 800);
         } catch (err) {
           console.error('Aadhaar upload / DOB extraction failed', err);
@@ -232,9 +237,9 @@ const Register = () => {
     setFaceImage(imageFile);
     setFacePreview(URL.createObjectURL(imageFile));
     setFaceVerified(true);
-
-    // 🔥 MOVE TO NEXT STEP (Age Check)
-    setCurrentStep(5);
+    setSubStage(3); // show face verified status
+    // after 1s show age verification
+    setTimeout(() => setSubStage(4), 1000);
   };
 
   // Compute age from DOB string (expects YYYY-MM-DD)
@@ -258,9 +263,9 @@ const Register = () => {
       if (age !== null) {
         setAgeYears(age);
         setAgeVerified(true);
-        // Show authenticated panel for at least 2.5 seconds, then auto-advance to OTP (step 6)
+        // auto-advance to OTP (step 3) after 2.5s
         timerId = setTimeout(() => {
-          setCurrentStep(6);
+          setCurrentStep(3);
         }, 2500);
       }
     }
@@ -274,11 +279,12 @@ const Register = () => {
   const handleAgeVerify = () => {
     setIsLoading(true);
     setTimeout(() => {
-      // compute age from DOB if available
       const computed = computeAgeFromDob(watch('dob'));
       if (computed !== null) setAgeYears(computed);
       setAgeVerified(true);
       setIsLoading(false);
+      // auto-advance to OTP after 2.5s
+      setTimeout(() => setCurrentStep(3), 2500);
     }, 1000);
   };
 
@@ -381,24 +387,16 @@ const Register = () => {
           <form onSubmit={handleSubmit(onSubmit)}>
             <AnimatePresence mode="wait">
 
-              {/* STEP 1: Basic Details */}
+              {/* STEP 1: Basic Info + Address */}
               {currentStep === 1 && (
                 <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
                   <h3 className="text-2xl font-bold text-slate-800 mb-6 border-b pb-2">{t('register.basicDetails')}</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <InputField label={t('register.fullName')} name="fullName" icon={User} {...register('fullName', { required: t('register.nameRequired') })} error={errors.fullName} />
                     <InputField label={t('register.mobileNumber')} name="mobile" type="tel" icon={Phone} {...register('mobile', { required: t('register.mobileRequired'), pattern: { value: /^[0-9]{10}$/, message: t('register.mustBe10Digits') } })} error={errors.mobile} />
-                    <InputField label={t('register.email')} name="email" type="email" icon={Mail} className="md:col-span-2" {...register('email', { required: t('register.emailRequired'), pattern: { value: /.+@.+\..+/, message: t('register.invalidEmail') } })} error={errors.email} />
                     <InputField label={t('register.password')} name="password" type="password" icon={Lock} {...register('password', { required: t('register.required'), minLength: { value: 6, message: t('register.min6Chars') } })} error={errors.password} />
                     <InputField label={t('register.confirmPassword')} name="confirmPassword" type="password" icon={Lock} {...register('confirmPassword', { required: t('register.required'), validate: (val) => val === watch('password') || t('register.passwordsMismatch') })} error={errors.confirmPassword} />
                   </div>
-                </motion.div>
-              )}
-
-              {/* STEP 2: Address Details */}
-              {currentStep === 2 && (
-                <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
-                  <h3 className="text-2xl font-bold text-slate-800 mb-6 border-b pb-2">{t('register.addressDetails')}</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <SelectField
                       label={t('register.state')}
@@ -443,90 +441,112 @@ const Register = () => {
                 </motion.div>
               )}
 
-              {/* STEP 3: Aadhaar Upload */}
+              {/* STEP 2: Sequential Aadhaar → Face → Age flow */}
+              {currentStep === 2 && (
+                <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
+                  <AnimatePresence mode="wait">
+
+                    {/* subStage 0: Aadhaar Upload */}
+                    {subStage === 0 && (
+                      <motion.div key="sub0" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6 text-center max-w-lg mx-auto">
+                        <ShieldCheck className="w-16 h-16 text-[#FF9933] mx-auto mb-4" />
+                        <h3 className="text-2xl font-bold text-slate-800">{t('register.aadhaarUploadTitle')}</h3>
+                        <p className="text-slate-500 mb-8">{t('register.uploadClearPhoto')}</p>
+                        <div className="space-y-6">
+                          <FileUpload
+                            onFileSelect={(file) => {
+                              setAadhaarFile(file);
+                              const reader = new FileReader();
+                              reader.onload = (e) => setAadhaarPreview(e.target.result);
+                              reader.readAsDataURL(file);
+                            }}
+                            previewUrl={aadhaarPreview}
+                            onClear={() => { setAadhaarFile(null); setAadhaarPreview(null); }}
+                          />
+                          <Button onClick={handleAadhaarUpload} className="w-full text-lg shadow-md" variant="secondary" disabled={!aadhaarFile}>
+                            {t('register.uploadVerifyBtn')}
+                          </Button>
+                        </div>
+                      </motion.div>
+                    )}
+
+                    {/* subStage 1: Document Accepted */}
+                    {subStage === 1 && (
+                      <motion.div key="sub1" initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ opacity: 0 }} className="text-center max-w-lg mx-auto">
+                        <motion.div className="bg-green-50 border border-green-200 rounded-xl p-6 flex flex-col items-center shadow-inner">
+                          <CheckCircle className="w-12 h-12 text-green-500 mb-3" />
+                          <h4 className="text-lg font-bold text-green-800">{t('register.docAccepted')}</h4>
+                          <p className="text-green-600 text-sm font-medium">{t('register.aadhaarVerifiedSuccess')}</p>
+                          {aadhaarPreview && (
+                            <img src={aadhaarPreview} alt="Aadhaar preview" className="mt-4 w-32 h-auto rounded border border-green-200 opacity-80" />
+                          )}
+                        </motion.div>
+                      </motion.div>
+                    )}
+
+                    {/* subStage 2: Face Scan Camera */}
+                    {subStage === 2 && (
+                      <motion.div key="sub2" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6 text-center max-w-lg mx-auto">
+                        <ScanFace className="w-16 h-16 text-[#1E3A8A] mx-auto mb-4" />
+                        <h3 className="text-2xl font-bold text-slate-800">{t('register.faceVerification')}</h3>
+                        <p className="text-slate-500 mb-6">{t('register.captureLivePhoto')}</p>
+                        <FaceVerification
+                          onCapture={handleFaceCaptureSubmit}
+                          aadhaarFile={aadhaarFile}
+                          aadhaarPreview={aadhaarPreview}
+                          aadhaarVerified={aadhaarVerified}
+                        />
+                      </motion.div>
+                    )}
+
+                    {/* subStage 3: Face Verified status */}
+                    {subStage === 3 && (
+                      <motion.div key="sub3" initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ opacity: 0 }} className="text-center max-w-lg mx-auto">
+                        <motion.div className="bg-green-50 border border-green-200 rounded-xl p-6 flex flex-col items-center shadow-inner">
+                          <CheckCircle className="w-12 h-12 text-green-500 mb-3" />
+                          <h4 className="text-lg font-bold text-green-800">{t('register.docAccepted')}</h4>
+                          <p className="text-green-600 text-sm font-medium">{t('register.aadhaarVerifiedSuccess')}</p>
+                          {facePreview && (
+                            <img src={facePreview} alt="Face" className="mt-4 w-20 h-20 object-cover rounded-full shadow border-2 border-[#1E3A8A]" />
+                          )}
+                        </motion.div>
+                      </motion.div>
+                    )}
+
+                    {/* subStage 4: Age Verification with autofilled DOB */}
+                    {subStage === 4 && (
+                      <motion.div key="sub4" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6 text-center max-w-md mx-auto">
+                        <Calendar className="w-16 h-16 text-[#138808] mx-auto mb-4" />
+                        <h3 className="text-2xl font-bold text-slate-800">{t('register.ageVerification')}</h3>
+                        <p className="text-slate-500 mb-8">{t('register.confirmEligibility')}</p>
+                        {!ageVerified ? (
+                          <div className="bg-white border-2 border-slate-200 rounded-2xl p-6 shadow-sm">
+                            <InputField label={t('register.confirmDOB')} name="dob" type="date" {...register('dob')} />
+                            <Button onClick={handleAgeVerify} className="w-full mt-6 shadow-md" variant="accent">
+                              {t('register.verifyEligibilityBtn')}
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="bg-green-50 border-2 border-green-200 rounded-2xl p-8 shadow-inner relative overflow-hidden">
+                            <div className="absolute top-0 left-0 w-full h-2 bg-green-500"></div>
+                            <p className="text-green-700 text-sm uppercase font-extrabold tracking-wider mb-2">{t('register.ageAuthenticated')}</p>
+                            <p className="text-4xl font-extrabold text-[#138808] mb-4">{ageYears !== null ? `${ageYears} ${t('register.years')}` : t('register.years')}</p>
+                            <div className="inline-flex items-center text-green-800 font-bold p-2">
+                              <CheckCircle className="w-6 h-6 mr-2 text-green-600" />
+                              {t('register.eligiblePortal')}
+                            </div>
+                          </div>
+                        )}
+                      </motion.div>
+                    )}
+
+                  </AnimatePresence>
+                </motion.div>
+              )}
+
+              {/* STEP 3: OTP Verification (Mobile) */}
               {currentStep === 3 && (
-                <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6 text-center max-w-lg mx-auto">
-                  <ShieldCheck className="w-16 h-16 text-[#FF9933] mx-auto mb-4" />
-                  <h3 className="text-2xl font-bold text-slate-800">{t('register.aadhaarUploadTitle')}</h3>
-                  <p className="text-slate-500 mb-8">{t('register.uploadClearPhoto')}</p>
-
-                  {!aadhaarVerified ? (
-                    <div className="space-y-6">
-                      <FileUpload
-                        onFileSelect={(file) => {
-                          setAadhaarFile(file);
-                          setAadhaarPreview(URL.createObjectURL(file));
-                        }}
-                        previewUrl={aadhaarPreview}
-                        onClear={() => {
-                          setAadhaarFile(null);
-                          setAadhaarPreview(null);
-                        }}
-                      />
-                      <Button onClick={handleAadhaarUpload} className="w-full text-lg shadow-md" variant="secondary" disabled={!aadhaarFile}>
-                        {t('register.uploadVerifyBtn')}
-                      </Button>
-                    </div>
-                  ) : (
-                    <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} className="bg-green-50 border border-green-200 rounded-xl p-6 flex flex-col items-center shadow-inner">
-                      <CheckCircle className="w-12 h-12 text-green-500 mb-3" />
-                      <h4 className="text-lg font-bold text-green-800">{t('register.docAccepted')}</h4>
-                      <p className="text-green-600 text-sm font-medium">{t('register.aadhaarVerifiedSuccess')}</p>
-                      {aadhaarPreview && (
-                        <img src={aadhaarPreview} alt="Aadhaar preview" className="mt-4 w-32 h-auto rounded border border-green-200 opacity-80" />
-                      )}
-                    </motion.div>
-                  )}
-                </motion.div>
-              )}
-
-              {/* STEP 4: Face Scan */}
-              {currentStep === 4 && (
-                <motion.div key="step4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6 text-center max-w-lg mx-auto">
-                  <ScanFace className="w-16 h-16 text-[#1E3A8A] mx-auto mb-4" />
-                  <h3 className="text-2xl font-bold text-slate-800">{t('register.faceVerification')}</h3>
-                  <p className="text-slate-500 mb-6">{t('register.captureLivePhoto')}</p>
-
-                  <FaceVerification
-                    onCapture={handleFaceCaptureSubmit}
-                    aadhaarFile={aadhaarFile}
-                    aadhaarPreview={aadhaarPreview}
-                    aadhaarVerified={aadhaarVerified}
-                  />
-                </motion.div>
-              )}
-
-              {/* STEP 5: Age Verification */}
-              {currentStep === 5 && (
-                <motion.div key="step5" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6 text-center max-w-md mx-auto">
-                  <Calendar className="w-16 h-16 text-[#138808] mx-auto mb-4" />
-                  <h3 className="text-2xl font-bold text-slate-800">{t('register.ageVerification')}</h3>
-                  <p className="text-slate-500 mb-8">{t('register.confirmEligibility')}</p>
-
-                  {!ageVerified ? (
-                    <div className="bg-white border-2 border-slate-200 rounded-2xl p-6 shadow-sm">
-                      <InputField label={t('register.confirmDOB')} name="dob" type="date" {...register('dob')} />
-                      <Button onClick={handleAgeVerify} className="w-full mt-6 shadow-md" variant="accent">
-                        {t('register.verifyEligibilityBtn')}
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="bg-green-50 border-2 border-green-200 rounded-2xl p-8 shadow-inner relative overflow-hidden">
-                      <div className="absolute top-0 left-0 w-full h-2 bg-green-500"></div>
-                      <p className="text-green-700 text-sm uppercase font-extrabold tracking-wider mb-2">{t('register.ageAuthenticated')}</p>
-                      <p className="text-4xl font-extrabold text-[#138808] mb-4">{ageYears !== null ? `${ageYears} ${t('register.years')}` : t('register.years')}</p>
-                      <div className="inline-flex items-center text-green-800 font-bold p-2">
-                        <CheckCircle className="w-6 h-6 mr-2 text-green-600" />
-                        {t('register.eligiblePortal')}
-                      </div>
-                    </div>
-                  )}
-                </motion.div>
-              )}
-
-              {/* STEP 6: OTP Verification (Mobile) */}
-              {currentStep === 6 && (
-                <motion.div key="step6" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6 text-center max-w-md mx-auto">
+                <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6 text-center max-w-md mx-auto">
                   <Smartphone className="w-16 h-16 text-slate-800 mx-auto mb-4" />
                   <h3 className="text-2xl font-bold text-slate-800">{t('register.mobileOTP')}</h3>
                   <p className="text-slate-500 mb-8">{t('register.secureAccountOTP')}</p>
@@ -574,9 +594,9 @@ const Register = () => {
                 </motion.div>
               )}
 
-              {/* STEP 7: Review */}
-              {currentStep === 7 && (
-                <motion.div key="step7" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
+              {/* STEP 4: Review */}
+              {currentStep === 4 && (
+                <motion.div key="step4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
                   <div className="text-center mb-8">
                     <h3 className="text-3xl font-bold text-slate-800">{t('register.finalReview')}</h3>
                     <p className="text-slate-500 mt-2">{t('register.validateData')}</p>
@@ -589,12 +609,11 @@ const Register = () => {
                       <dl className="space-y-3 text-sm">
                         <div className="flex justify-between border-b pb-1 gap-4"><dt className="text-slate-500">{t('register.fullName')}</dt><dd className="font-bold text-slate-800 break-words text-right">{formData.fullName}</dd></div>
                         <div className="flex justify-between border-b pb-1 gap-4"><dt className="text-slate-500">{t('register.mobileNumber')}</dt><dd className="font-bold text-green-700">+91 {formData.mobile}</dd></div>
-                        <div className="flex justify-between border-b pb-1 gap-4"><dt className="text-slate-500">{t('register.email')}</dt><dd className="font-bold text-slate-800 break-all text-right">{formData.email}</dd></div>
                       </dl>
                     </div>
 
                     <div className="bg-slate-50 rounded-xl p-6 border border-slate-200 relative shadow-sm">
-                      <button type="button" onClick={() => setCurrentStep(2)} className="absolute top-4 right-4 text-sm font-semibold text-[#1E3A8A] hover:underline">{t('register.edit')}</button>
+                      <button type="button" onClick={() => setCurrentStep(1)} className="absolute top-4 right-4 text-sm font-semibold text-[#1E3A8A] hover:underline">{t('register.edit')}</button>
                       <h4 className="font-bold text-slate-700 mb-4 flex items-center"><MapPin className="w-5 h-5 mr-2 text-orange-500" /> {t('register.localityInfo')}</h4>
                       <dl className="space-y-3 text-sm">
                         <div className="flex justify-between border-b pb-1 gap-4"><dt className="text-slate-500">{t('register.stateDist')}</dt><dd className="font-bold text-slate-800 text-right">{formData.state}, {formData.district}</dd></div>
@@ -608,7 +627,11 @@ const Register = () => {
                       <div className="flex flex-col sm:flex-row gap-6 justify-around">
                         <div className="flex flex-col items-center">
                           <span className="text-xs font-bold text-slate-500 uppercase mb-2 block">{t('register.aadhaarMap')}</span>
-                          {aadhaarPreview ? <img src={aadhaarPreview} alt="Aadhaar" className="w-32 h-20 object-cover rounded shadow" /> : <div className="w-32 h-20 bg-slate-200 rounded animate-pulse" />}
+                          {aadhaarPreview ? (
+                            <img src={aadhaarPreview} alt="Aadhaar" className="w-48 h-28 object-cover rounded-xl border-2 border-orange-200 shadow-md" />
+                          ) : (
+                            <div className="w-48 h-28 bg-slate-200 rounded-xl animate-pulse" />
+                          )}
                         </div>
                         <div className="flex flex-col items-center border-l sm:border-t-0 sm:border-l border-slate-300 pl-0 sm:pl-6 pt-6 sm:pt-0 mt-4 sm:mt-0">
                           <span className="text-xs font-bold text-slate-500 uppercase mb-2 block">{t('register.livenessNetID')}</span>
@@ -643,9 +666,9 @@ const Register = () => {
                 <div />
               )}
 
-              {currentStep < 7 ? (
-                // Hide the global Continue button on the Face Scan step (step 4)
-                currentStep === 4 ? (
+              {currentStep < 4 ? (
+                // Hide Continue on step 2 entirely — flow is fully automatic
+                currentStep === 2 ? (
                   <div />
                 ) : (
                   <Button
