@@ -18,4 +18,6 @@ public class NearbyComplaintDTO {
     private String status;
     private String imageUrl;
     private LocalDateTime createdAt;
+    private Integer supportCount;
+    private Boolean isSupportedByCurrentUser;
 }

@@ -58,6 +58,9 @@ public class Complaint {
     @Column(name = "blockchain_txn_id")
     private String blockchainTxnId;
 
+    @Builder.Default
+    private Integer supportCount = 0;
+
     public String getBlockchainTxnId() {
         return blockchainTxnId;
     }

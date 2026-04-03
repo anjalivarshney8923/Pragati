@@ -57,4 +57,28 @@ public class ComplaintController {
         response.put("message", "Status updated successfully.");
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/{id}/support")
+    public ResponseEntity<?> supportComplaint(@PathVariable Long id) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        try {
+            long updatedCount = complaintService.supportComplaint(id, username);
+            Map<String, Object> result = new HashMap<>();
+            result.put("message", "Complaint supported successfully");
+            result.put("supportCount", updatedCount);
+            return ResponseEntity.ok(result);
+        } catch (RuntimeException e) {
+            String msg = e.getMessage() != null ? e.getMessage() : "Error";
+            if (msg.toLowerCase().contains("already supported") || msg.toLowerCase().contains("already")) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("error", msg));
+            }
+            if (msg.toLowerCase().contains("not found")) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("error", msg));
+            }
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", msg));
+        }
+    }
 }

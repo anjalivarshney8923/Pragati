@@ -89,6 +89,10 @@ export const complaintService = {
       params: { latitude: lat, longitude: lon, radius }
     });
     return response.data;
+  },
+  supportComplaint: async (id) => {
+    const response = await api.post(`/complaints/${id}/support`);
+    return response.data;
   }
 };
 
