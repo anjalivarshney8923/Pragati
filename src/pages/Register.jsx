@@ -82,17 +82,14 @@ const Register = () => {
     return () => clearInterval(interval);
   }, [timer]);
 
-  // Cleanup object URLs on unmount
+  // Cleanup face blob URL on unmount
   useEffect(() => {
     return () => {
-      if (aadhaarPreview && aadhaarPreview.startsWith('blob:')) {
-        URL.revokeObjectURL(aadhaarPreview);
-      }
       if (facePreview && facePreview.startsWith('blob:')) {
         URL.revokeObjectURL(facePreview);
       }
     };
-  }, []); // Empty dependency array - only run on unmount
+  }, []);
 
   // Handle cascading dropdowns
   useEffect(() => {
@@ -455,7 +452,9 @@ const Register = () => {
                       <FileUpload
                         onFileSelect={(file) => {
                           setAadhaarFile(file);
-                          setAadhaarPreview(URL.createObjectURL(file));
+                          const reader = new FileReader();
+                          reader.onload = (e) => setAadhaarPreview(e.target.result);
+                          reader.readAsDataURL(file);
                         }}
                         previewUrl={aadhaarPreview}
                         onClear={() => {
@@ -608,7 +607,11 @@ const Register = () => {
                       <div className="flex flex-col sm:flex-row gap-6 justify-around">
                         <div className="flex flex-col items-center">
                           <span className="text-xs font-bold text-slate-500 uppercase mb-2 block">{t('register.aadhaarMap')}</span>
-                          {aadhaarPreview ? <img src={aadhaarPreview} alt="Aadhaar" className="w-32 h-20 object-cover rounded shadow" /> : <div className="w-32 h-20 bg-slate-200 rounded animate-pulse" />}
+                          {aadhaarPreview ? (
+                            <img src={aadhaarPreview} alt="Aadhaar" className="w-48 h-28 object-cover rounded-xl border-2 border-orange-200 shadow-md" />
+                          ) : (
+                            <div className="w-48 h-28 bg-slate-200 rounded-xl animate-pulse" />
+                          )}
                         </div>
                         <div className="flex flex-col items-center border-l sm:border-t-0 sm:border-l border-slate-300 pl-0 sm:pl-6 pt-6 sm:pt-0 mt-4 sm:mt-0">
                           <span className="text-xs font-bold text-slate-500 uppercase mb-2 block">{t('register.livenessNetID')}</span>
