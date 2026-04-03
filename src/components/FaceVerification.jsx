@@ -174,8 +174,8 @@ export default function FaceVerification({
                             console.warn("auto capture flow failed", e);
                         }
                     })();
-                }, 5000);
-                setStatus("Auto capture in 5 seconds...");
+                }, 2500);
+                setStatus("Auto capture in 2.5 seconds...");
             }
         return () => {
                 if (timer) clearTimeout(timer);
@@ -226,15 +226,6 @@ export default function FaceVerification({
 
             <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
                 <div style={{ flex: "1 1 520px", minWidth: 320 }}>
-                    <label style={{ display: "block", fontWeight: 600, marginBottom: 8 }}>Aadhaar image</label>
-                    <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
-                        <div>
-                            <input type="file" accept="image/*" onChange={handleAadhaarChange} disabled={!!propAadhaarFile} />
-                            {propAadhaarFile && <div style={{ fontSize: 13, color: "#0b5" }}><em>Using Aadhaar from previous step</em></div>}
-                        </div>
-                        {aadhaarPreview && <img src={aadhaarPreview} alt="aadhaar" style={{ width: 200, borderRadius: 10, boxShadow: "0 8px 24px rgba(2,6,23,0.04)" }} />}
-                    </div>
-
                     <div style={{ marginTop: 14, borderRadius: 10, overflow: "hidden", boxShadow: "0 12px 36px rgba(2,6,23,0.06)" }}>
                         <Webcam
                             audio={false}
@@ -251,6 +242,12 @@ export default function FaceVerification({
                             }}
                         />
                     </div>
+                    {aadhaarPreview && (
+                        <div style={{ marginTop: 12 }}>
+                            <label style={{ display: "block", fontWeight: 600, marginBottom: 6, fontSize: 13 }}>Aadhaar image</label>
+                            <img src={aadhaarPreview} alt="aadhaar" style={{ width: 200, borderRadius: 10, boxShadow: "0 8px 24px rgba(2,6,23,0.04)" }} />
+                        </div>
+                    )}
                 </div>
 
                 <div style={{ width: 360, minWidth: 260 }}>

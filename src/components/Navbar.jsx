@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaGlobe, FaSearch, FaBars, FaTimes, FaFont } from 'react-icons/fa';
 import { MdOutlineAccessibleForward } from 'react-icons/md';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
 const TopUtilityBar = () => {
@@ -55,7 +55,6 @@ const TopUtilityBar = () => {
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const navigate = useNavigate();
   const menuItems = ['Home', 'About', 'Features', 'Transparency', 'How It Works', 'Portals', 'Contact'];
 
   return (
@@ -88,15 +87,15 @@ const Navbar = () => {
 
         {/* Action Buttons */}
         <div className="hidden lg:flex items-center space-x-3">
-          <Link to="/register" className="border-2 border-[#1E3A8A] text-[#1E3A8A] px-4 py-2 rounded-md text-sm font-semibold hover:bg-[#1E3A8A] hover:text-white transition-all shadow-sm flex items-center justify-center">
-            Villager Portal
+          <Link to="/login" className="border-2 border-[#1E3A8A] text-[#1E3A8A] px-4 py-2 rounded-md text-sm font-semibold hover:bg-[#1E3A8A] hover:text-white transition-all shadow-sm flex items-center justify-center">
+            User Login
           </Link>
-          <button
-            onClick={() => navigate('/officer-login')}
+          <Link
+            to="/officer-login"
             className="bg-gradient-to-r from-[#1E3A8A] to-[#1E3A8A] text-white px-4 py-2 rounded-md text-sm font-semibold hover:shadow-lg transition-all shadow-md"
           >
-            Governance Portal
-          </button>
+            Governance Login
+          </Link>
         </div>
 
         {/* Mobile Menu Toggle */}
@@ -129,13 +128,14 @@ const Navbar = () => {
                 </li>
               ))}
               <div className="pt-4 flex flex-col gap-3">
-                <Link to="/register" className="w-full border-2 border-[#1E3A8A] text-[#1E3A8A] py-2 rounded-md font-semibold text-center block">Villager Portal</Link>
-                <button 
-                  onClick={() => { navigate('/officer-login'); setIsOpen(false); }}
-                  className="w-full bg-[#1E3A8A] text-white py-2 rounded-md font-semibold text-center mt-2"
+                <Link to="/login" className="w-full border-2 border-[#1E3A8A] text-[#1E3A8A] py-2 rounded-md font-semibold text-center block">User Login</Link>
+                <Link
+                  to="/officer-login"
+                  onClick={() => setIsOpen(false)}
+                  className="w-full bg-[#1E3A8A] text-white py-2 rounded-md font-semibold text-center mt-2 block"
                 >
-                  Governance Portal
-                </button>
+                  Governance Login
+                </Link>
               </div>
             </ul>
           </motion.div>
