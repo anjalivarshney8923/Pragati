@@ -1,224 +1,222 @@
 import React, { useState } from 'react';
 import {
-  Scale, ShieldCheck, BookOpen, Droplets, Zap, GraduationCap,
-  HeartPulse, Home, Wheat, Vote, ChevronDown, ChevronUp, ExternalLink
+  Clock, FileText, MapPin, Building2, UserCircle, Users,
+  MessageCircle, Hammer, CalendarCheck, RefreshCw, ChevronDown, ChevronUp, ExternalLink, Scale
 } from 'lucide-react';
 
-const rights = [
+const escalationSteps = [
   {
-    icon: Vote,
+    icon: Clock,
     color: 'text-blue-600',
     bg: 'bg-blue-50',
     border: 'border-blue-100',
-    title: 'Right to Vote',
-    law: 'Representation of the People Act, 1950',
-    summary: 'Every citizen above 18 years has the right to vote in Gram Panchayat, State and General elections without discrimination.',
+    title: 'Step 1: Wait for Given Time After Complaint',
+    law: 'Process Standard',
+    summary: 'Villagers should wait for the normal resolution time. If not solved, proceed to meet the BDO. This ensures a fair escalation process.',
     details: [
-      'Vote in Gram Panchayat elections every 5 years',
-      'Enroll in voter list at nearest BLO office',
-      'No one can prevent you from casting your vote',
-      'Voting is secret — no one can ask how you voted',
+      'Water problem: 3–5 days',
+      'Electricity problem: 1–3 days',
+      'Sanitation problem: 2–4 days',
+      'Road problem: 7–15 days',
+      'Infrastructure problem: 5–10 days',
     ],
-    tag: 'Political',
+    tag: 'Waiting Time',
   },
   {
-    icon: BookOpen,
+    icon: FileText,
     color: 'text-orange-600',
     bg: 'bg-orange-50',
     border: 'border-orange-100',
-    title: 'Right to Information (RTI)',
-    law: 'Right to Information Act, 2005',
-    summary: 'Every citizen can request information from any government office. The office must respond within 30 days.',
+    title: 'Step 2: Gather Basic Information',
+    law: 'Preparation',
+    summary: 'No written documents needed — just basic info to help the BDO understand quickly. Example: "Road broken near school since 10 days, no action yet."',
     details: [
-      'File RTI application at Panchayat office for ₹10',
-      'Response must be given within 30 days',
-      'Covers all government schemes, funds, and decisions',
-      'First appeal to senior officer if denied',
+      'Problem details & Location of problem',
+      'Date when complaint was originally raised',
+      'Complaint ID (if using portal)',
+      'Photo of the issue (if available)',
     ],
-    tag: 'Transparency',
+    tag: 'Preparation',
   },
   {
-    icon: Droplets,
+    icon: MapPin,
     color: 'text-cyan-600',
     bg: 'bg-cyan-50',
     border: 'border-cyan-100',
-    title: 'Right to Clean Drinking Water',
-    law: 'Jal Jeevan Mission & Article 21',
-    summary: 'Every household is entitled to a functional tap water connection providing safe and adequate drinking water.',
+    title: 'Step 3: Find the Block Office Location',
+    law: 'Navigation',
+    summary: 'Ask: "Block office kaha hai?" or "BDO kaha milenge?". Usually located at the Tehsil area or nearby town.',
     details: [
-      '55 litres per person per day is the minimum standard',
-      'Complain to Gram Panchayat if supply is disrupted',
-      'Water quality testing must be done regularly',
-      'Free connection under Jal Jeevan Mission for BPL families',
+      'Ask at the local Panchayat office',
+      'Ask the Village School teacher',
+      'Ask Anganwadi or ASHA workers',
+      'Or simply ask other villagers for directions',
     ],
-    tag: 'Basic Needs',
+    tag: 'Location',
   },
   {
-    icon: Zap,
+    icon: Building2,
     color: 'text-yellow-600',
     bg: 'bg-yellow-50',
     border: 'border-yellow-100',
-    title: 'Right to Electricity',
-    law: 'Saubhagya Scheme & Electricity Act, 2003',
-    summary: 'Every household is entitled to a free electricity connection under the Pradhan Mantri Sahaj Bijli Har Ghar Yojana.',
+    title: 'Step 4: Visit Block Development Office',
+    law: 'Action',
+    summary: 'Visit the Block Development Office during working hours. Morning is best because the BDO is usually available and it is less crowded.',
     details: [
-      'Free connection for BPL households under Saubhagya',
-      'Minimum 8 hours of power supply in rural areas',
-      'Complain to DISCOM if supply is irregular',
-      'Subsidised rates for below poverty line families',
+      'Office Timing: Monday to Friday, 10:00 AM to 5:00 PM',
+      'Best Time: Morning (10 AM to 12 PM)',
+      'You can go alone, with family, or a group of villagers',
+      'Going with a group is better for serious problems',
     ],
-    tag: 'Basic Needs',
+    tag: 'Visit',
   },
   {
-    icon: GraduationCap,
+    icon: UserCircle,
     color: 'text-green-600',
     bg: 'bg-green-50',
     border: 'border-green-100',
-    title: 'Right to Education',
-    law: 'Right to Education Act, 2009',
-    summary: 'Children aged 6–14 years have the fundamental right to free and compulsory education in a neighbourhood school.',
+    title: 'Step 5: Ask at Office Reception',
+    law: 'Communication',
+    summary: 'No formal education needed. Just say: "BDO se milna hai" or "Gaon ki problem hai".',
     details: [
-      'Free education from Class 1 to Class 8',
-      'No child can be expelled or failed till Class 8',
-      '25% seats reserved for EWS children in private schools',
-      'Mid-day meal is a right in government schools',
+      'Office staff will ask for your village name',
+      'They will ask the general nature of the problem',
+      'They will guide you to the right waiting area',
     ],
-    tag: 'Education',
+    tag: 'Inquiry',
   },
   {
-    icon: HeartPulse,
+    icon: Users,
     color: 'text-red-600',
     bg: 'bg-red-50',
     border: 'border-red-100',
-    title: 'Right to Health',
-    law: 'Ayushman Bharat & Article 21',
-    summary: 'Every citizen has the right to access basic healthcare. Under Ayushman Bharat, families get ₹5 lakh health cover per year.',
+    title: 'Step 6: Wait for Your Turn',
+    law: 'Patience',
+    summary: 'Office staff may allow a direct meeting or ask you to wait. Meetings usually happen on the same day.',
     details: [
-      '₹5 lakh annual health cover under PM-JAY',
-      'Free treatment at government hospitals',
-      'Free medicines at Jan Aushadhi Kendras',
-      'Emergency treatment cannot be denied by any hospital',
+      'Sit in the designated waiting area',
+      'Wait patiently for your turn to be called',
+      'Prepare what you want to say in your head',
     ],
-    tag: 'Health',
+    tag: 'Waiting',
   },
   {
-    icon: Home,
+    icon: MessageCircle,
     color: 'text-purple-600',
     bg: 'bg-purple-50',
     border: 'border-purple-100',
-    title: 'Right to Housing',
-    law: 'Pradhan Mantri Awas Yojana (Gramin)',
-    summary: 'Eligible rural families are entitled to financial assistance to construct a pucca house with basic amenities.',
+    title: 'Step 7: Meet the BDO',
+    law: 'Discussion',
+    summary: 'Speak in simple language. No formal English required. Tell them the problem, since when, and how it affects the village.',
     details: [
-      '₹1.20 lakh assistance in plain areas, ₹1.30 lakh in hilly areas',
-      'Includes toilet under Swachh Bharat Mission',
-      'Apply through Gram Panchayat or AwaasSoft portal',
-      'Priority to SC/ST, minorities and disabled persons',
+      'Clearly state what the problem is',
+      'Mention that the Pradhan has not resolved it yet',
+      'Explain how the villagers are being affected',
+      'Example: "Sir, gaon me pani pipeline tuti hai, 7 din se repair nahi hua."',
     ],
-    tag: 'Housing',
+    tag: 'Meeting',
   },
   {
-    icon: Wheat,
+    icon: Hammer,
     color: 'text-amber-600',
     bg: 'bg-amber-50',
     border: 'border-amber-100',
-    title: 'Right to Food',
-    law: 'National Food Security Act, 2013',
-    summary: 'Every person in a priority household is entitled to 5 kg of subsidised foodgrains per month at ₹1–3 per kg.',
+    title: 'Step 8: BDO Takes Action',
+    law: 'Resolution',
+    summary: 'The BDO has the authority to monitor the Pradhan and ensure the work is completed successfully.',
     details: [
-      '5 kg rice/wheat/coarse grain per person per month',
-      'Antyodaya families get 35 kg per household per month',
-      'Collect ration from Fair Price Shop with Aadhaar',
-      'Complain to District Food Officer if denied',
+      'BDO may call Panchayat officials directly',
+      'BDO can order an immediate inspection',
+      'BDO can send a repair team to your village',
+      'BDO can approve funds and give a timeline',
     ],
-    tag: 'Food',
+    tag: 'Authority',
   },
   {
-    icon: Scale,
+    icon: CalendarCheck,
     color: 'text-indigo-600',
     bg: 'bg-indigo-50',
     border: 'border-indigo-100',
-    title: 'Right to Legal Aid',
-    law: 'Legal Services Authorities Act, 1987',
-    summary: 'Every citizen below the poverty line or belonging to a weaker section has the right to free legal aid and representation.',
+    title: 'Step 9: Ask for Follow-Up Details',
+    law: 'Tracking',
+    summary: 'This helps you and your village track the progress. Always ask: "Sir, kab tak problem solve hogi?".',
     details: [
-      'Free legal aid from District Legal Services Authority (DLSA)',
-      'Covers civil and criminal cases',
-      'Available to SC/ST, women, children, disabled persons',
-      'Contact nearest Lok Adalat for quick resolution',
+      'Ask for a clear date or timeline',
+      'Note down any specific instructions given',
+      'Share the timeline with other affected villagers',
     ],
-    tag: 'Legal',
+    tag: 'Follow-Up',
   },
   {
-    icon: ShieldCheck,
+    icon: RefreshCw,
     color: 'text-teal-600',
     bg: 'bg-teal-50',
     border: 'border-teal-100',
-    title: 'Right Against Exploitation',
-    law: 'Articles 23 & 24 of the Constitution',
-    summary: 'No person can be forced into bonded labour, human trafficking, or child labour. Violations are punishable offences.',
+    title: 'Step 10: Follow Up if Needed',
+    law: 'Persistence',
+    summary: 'Usually, after BDO involvement, problems are solved faster. If not, don\'t hesitate to go back.',
     details: [
-      'Bonded labour is illegal and punishable',
-      'Children below 14 cannot be employed in hazardous work',
-      'Report violations to District Magistrate or police',
-      'Victims entitled to rehabilitation and compensation',
+      'Visit again after a few days if no action is taken',
+      'Politely remind the BDO of your previous visit',
+      'Ask for a current status update on the work',
     ],
-    tag: 'Protection',
+    tag: 'Persistence',
   },
 ];
 
 const tagColors = {
-  Political: 'bg-blue-100 text-blue-700',
-  Transparency: 'bg-orange-100 text-orange-700',
-  'Basic Needs': 'bg-cyan-100 text-cyan-700',
-  Education: 'bg-green-100 text-green-700',
-  Health: 'bg-red-100 text-red-700',
-  Housing: 'bg-purple-100 text-purple-700',
-  Food: 'bg-amber-100 text-amber-700',
-  Legal: 'bg-indigo-100 text-indigo-700',
-  Protection: 'bg-teal-100 text-teal-700',
+  'Waiting Time': 'bg-blue-100 text-blue-700',
+  'Preparation': 'bg-orange-100 text-orange-700',
+  'Location': 'bg-cyan-100 text-cyan-700',
+  'Visit': 'bg-yellow-100 text-yellow-700',
+  'Inquiry': 'bg-green-100 text-green-700',
+  'Waiting': 'bg-red-100 text-red-700',
+  'Meeting': 'bg-purple-100 text-purple-700',
+  'Authority': 'bg-amber-100 text-amber-700',
+  'Follow-Up': 'bg-indigo-100 text-indigo-700',
+  'Persistence': 'bg-teal-100 text-teal-700',
 };
 
-const RightCard = ({ right }) => {
+const StepCard = ({ step }) => {
   const [open, setOpen] = useState(false);
-  const Icon = right.icon;
+  const Icon = step.icon;
 
   return (
-    <div className={`bg-white rounded-2xl border ${right.border} shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md`}>
+    <div className={`bg-white rounded-2xl border ${step.border} shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md relative`}>
       <div className="p-5">
         <div className="flex items-start gap-4">
-          <div className={`w-11 h-11 rounded-xl ${right.bg} flex items-center justify-center flex-shrink-0 shadow-sm`}>
-            <Icon className={`w-5 h-5 ${right.color}`} />
+          <div className={`w-11 h-11 rounded-xl ${step.bg} flex items-center justify-center flex-shrink-0 shadow-sm`}>
+            <Icon className={`w-5 h-5 ${step.color}`} />
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
               <div>
-                <h3 className="text-sm font-extrabold text-slate-800 leading-tight">{right.title}</h3>
-                <p className="text-[10px] font-semibold text-slate-400 mt-0.5">{right.law}</p>
+                <h3 className="text-sm font-extrabold text-slate-800 leading-tight">{step.title}</h3>
+                <p className="text-[10px] font-semibold text-slate-400 mt-0.5">{step.law}</p>
               </div>
-              <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full flex-shrink-0 ${tagColors[right.tag]}`}>
-                {right.tag}
+              <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full flex-shrink-0 ${tagColors[step.tag]}`}>
+                {step.tag}
               </span>
             </div>
-            <p className="text-xs text-slate-500 leading-relaxed mt-2">{right.summary}</p>
+            <p className="text-xs text-slate-500 leading-relaxed mt-2">{step.summary}</p>
           </div>
         </div>
 
         <button
-          onClick={() => setOpen(o => !o)}
+          onClick={() => setOpen((o) => !o)}
           className="mt-4 flex items-center gap-1.5 text-[11px] font-black text-[#1E3A8A] hover:text-blue-800 transition-colors"
         >
-          {open ? 'Hide Details' : 'View Details'}
+          {open ? 'Hide Actions' : 'View Key Actions'}
           {open ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
         </button>
       </div>
 
       {open && (
-        <div className={`px-5 pb-5 pt-1 border-t ${right.border} ${right.bg}`}>
+        <div className={`px-5 pb-5 pt-1 border-t ${step.border} ${step.bg}`}>
           <ul className="space-y-2">
-            {right.details.map((d, i) => (
-              <li key={i} className="flex items-start gap-2 text-xs text-slate-600">
-                <span className={`w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0 ${right.color.replace('text-', 'bg-')}`} />
+            {step.details.map((d, i) => (
+              <li key={i} className="flex items-start gap-2 text-xs text-slate-600 font-medium">
+                <span className={`w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0 ${step.color.replace('text-', 'bg-')}`} />
                 {d}
               </li>
             ))}
@@ -239,13 +237,12 @@ const MyRights = () => (
             <Scale className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-slate-800 tracking-tight">My Rights</h2>
-            <p className="text-slate-500 text-xs font-semibold">Know your fundamental rights as a citizen of India</p>
+            <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Complaint Escalation Rights</h2>
+            <p className="text-slate-500 text-xs font-semibold">Your right to escalate unresolved issues to the BDO</p>
           </div>
         </div>
         <p className="text-sm text-slate-500 leading-relaxed max-w-2xl mt-3">
-          As a villager, you are entitled to several rights guaranteed by the Constitution of India and various government schemes.
-          Tap <span className="font-bold text-[#1E3A8A]">View Details</span> on any card to learn more.
+          If the Pradhan fails to resolve your village's problems in a timely manner, you have the full right to escalate the issue directly to the Block Development Office. Follow these 10 steps to ensure a fair and proper resolution.
         </p>
       </div>
       <div className="absolute -right-8 -top-8 w-40 h-40 bg-gov-blue/5 rounded-full blur-2xl z-0" />
@@ -254,10 +251,10 @@ const MyRights = () => (
     {/* Stats row */}
     <div className="grid grid-cols-3 gap-4">
       {[
-        { label: 'Total Rights', value: rights.length, color: 'text-[#1E3A8A]', bg: 'bg-blue-50' },
-        { label: 'Govt Schemes', value: 6, color: 'text-green-600', bg: 'bg-green-50' },
-        { label: 'Constitutional', value: 4, color: 'text-orange-600', bg: 'bg-orange-50' },
-      ].map(s => (
+        { label: 'Total Steps', value: escalationSteps.length, color: 'text-[#1E3A8A]', bg: 'bg-blue-50' },
+        { label: 'Wait Periods', value: 5, color: 'text-orange-600', bg: 'bg-orange-50' },
+        { label: 'Resolution Path', value: 1, color: 'text-green-600', bg: 'bg-green-50' },
+      ].map((s) => (
         <div key={s.label} className={`${s.bg} rounded-2xl p-4 text-center border border-white shadow-sm`}>
           <p className={`text-2xl font-extrabold ${s.color}`}>{s.value}</p>
           <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">{s.label}</p>
@@ -265,16 +262,19 @@ const MyRights = () => (
       ))}
     </div>
 
-    {/* Rights Grid */}
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {rights.map((r, i) => <RightCard key={i} right={r} />)}
+    {/* Rights/Steps Grid */}
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative">
+      {/* Optional: Add a visual timeline line on desktop if needed, or just let them stack naturally */}
+      {escalationSteps.map((s, i) => (
+        <StepCard key={i} step={s} />
+      ))}
     </div>
 
     {/* Footer note */}
     <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-2xl">
       <ExternalLink className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
       <p className="text-xs text-amber-700 font-medium leading-relaxed">
-        For more information, visit <span className="font-black">mygov.in</span> or contact your nearest <span className="font-black">Gram Panchayat office</span>. You can also raise a complaint through this portal if any of your rights are being violated.
+        Remember, you do <span className="font-black">not</span> need formal education, perfect English, or written documents to meet the BDO. Your voice and your problem are enough. Stand up for your village's <span className="font-black">rights</span> confidently.
       </p>
     </div>
   </div>
