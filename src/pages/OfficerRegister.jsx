@@ -150,7 +150,28 @@ const OfficerRegister = () => {
                  <SecureInputField label="State" name="state" icon="mapPin" register={register} required="State mandatory" />
                  <SecureInputField label="District" name="district" icon="mapPin" register={register} required="District mandatory" />
               </div>
-              <SecureInputField label="Department" name="department" icon="landmark" placeholder="e.g. Rural Development" register={register} required="Department mandatory" />
+              {/* Department Dropdown */}
+              <div className="mb-2">
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5 uppercase tracking-wide">
+                    Vibhag (Department) <span className="text-red-500">*</span>
+                  </label>
+                  <select 
+                    {...register("department", { required: "Department is mandatory" })}
+                    className="w-full p-3.5 bg-slate-50 border-2 border-slate-200 rounded-xl outline-none focus:border-[#1E3A8A] focus:ring-4 focus:ring-blue-100 font-bold uppercase tracking-widest text-xs transition-all"
+                  >
+                      <option value="">— Select Your Vibhag —</option>
+                      <option value="BDO">Block Dev Officer (BDO) — All Departments</option>
+                      <option value="JAL_VIBHAG">Jal Vibhag — Water Supply</option>
+                      <option value="ELECTRICITY">Electricity Vibhag — Power &amp; Lighting</option>
+                      <option value="ROAD">Road Vibhag — Roads &amp; Transport</option>
+                      <option value="SWACHHTA">Swachhta Vibhag — Sanitation &amp; Cleanliness</option>
+                      <option value="NAGAR_NIGAM">Nagar Nigam — Municipal Services</option>
+                      <option value="PRADHAN">Gram Pradhan — Panchayat &amp; General</option>
+                  </select>
+                  {errors.department && (
+                    <p className="mt-1 text-xs text-red-600 font-semibold">{errors.department.message}</p>
+                  )}
+              </div>
               <div className="mb-4">
                   <label className="block text-sm font-semibold text-slate-700 mb-1.5 uppercase tracking-wide">Designation</label>
                   <select 

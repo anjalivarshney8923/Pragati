@@ -3,21 +3,28 @@ import {
   Search, 
   Filter, 
   Eye, 
-  Edit3, 
   CheckCircle, 
   Clock, 
   AlertCircle,
   FileText,
   Download,
-  Calendar,
-  MoreVertical,
   Image as ImageIcon,
-  ExternalLink,
-  ChevronDown
+  Flame,
+  BadgeCheck
 } from 'lucide-react';
 import StatusBadge from '../../components/governance/StatusBadge';
 import { complaintService } from '../../services/api';
 import Loader from '../../components/Loader';
+
+const DEPT_LABELS = {
+  BDO:         { label: 'BDO — Sab Vibhag', color: 'bg-blue-100 text-blue-800' },
+  JAL_VIBHAG:  { label: 'Jal Vibhag', color: 'bg-cyan-100 text-cyan-800' },
+  ELECTRICITY: { label: 'Electricity Vibhag', color: 'bg-yellow-100 text-yellow-800' },
+  ROAD:        { label: 'Road Vibhag', color: 'bg-orange-100 text-orange-800' },
+  SWACHHTA:    { label: 'Swachhta Vibhag', color: 'bg-green-100 text-green-800' },
+  NAGAR_NIGAM: { label: 'Nagar Nigam', color: 'bg-purple-100 text-purple-800' },
+  PRADHAN:     { label: 'Gram Pradhan', color: 'bg-rose-100 text-rose-800' },
+};
 
 const Complaints = () => {
   const [complaints, setComplaints] = useState([]);
@@ -26,6 +33,13 @@ const Complaints = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [updatingId, setUpdatingId] = useState(null);
+
+  // Read officer department from localStorage (stored at login)
+  const officerData = (() => {
+    try { return JSON.parse(localStorage.getItem('officer') || '{}'); } catch { return {}; }
+  })();
+  const deptKey = officerData.department || 'BDO';
+  const deptInfo = DEPT_LABELS[deptKey] || { label: deptKey, color: 'bg-slate-100 text-slate-700' };
 
   useEffect(() => {
     fetchComplaints();
@@ -77,8 +91,16 @@ const Complaints = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-           <h1 className="text-3xl font-extrabold text-[#1E3A8A] uppercase tracking-tighter">Citizen Grievance Management</h1>
-           <p className="text-slate-500 font-bold text-xs uppercase tracking-widest mt-1">Real-time database integration: Anonymized villager data</p>
+           <div className="flex items-center gap-3 mb-2">
+             <h1 className="text-3xl font-extrabold text-[#1E3A8A] uppercase tracking-tighter">Citizen Grievance Management</h1>
+           </div>
+           <div className="flex items-center gap-3">
+             <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest border ${deptInfo.color}`}>
+               <BadgeCheck className="w-3.5 h-3.5" />
+               {deptInfo.label}
+             </span>
+             <p className="text-slate-500 font-bold text-xs uppercase tracking-widest">Real-time database integration: Anonymized villager data</p>
+           </div>
         </div>
         <div className="flex items-center gap-3">
            <button onClick={fetchComplaints} className="px-6 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-2xl shadow-sm hover:bg-slate-50 transition-all font-black uppercase tracking-widest text-[10px] flex items-center gap-2">
@@ -148,6 +170,7 @@ const Complaints = () => {
                 <th className="p-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Basic Info</th>
                 <th className="p-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Description</th>
                 <th className="p-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Location</th>
+                <th className="p-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Community</th>
                 <th className="p-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Status Control</th>
                 <th className="p-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Received</th>
                 <th className="p-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Docs</th>
@@ -173,6 +196,20 @@ const Complaints = () => {
                         <p className="text-xs text-slate-500 font-medium truncate" title={item.description}>{item.description}</p>
                     </td>
                     <td className="p-6 text-xs font-bold text-slate-600 italic">{item.location}</td>
+                    {/* Community Support Count */}
+                    <td className="p-6">
+                      <div className="flex flex-col items-start gap-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-base font-black text-[#1E3A8A]">{item.supportCount || 0}</span>
+                          <span className="text-[9px] text-slate-400 font-bold uppercase">supports</span>
+                        </div>
+                        {(item.supportCount || 0) >= 5 && (
+                          <span className="flex items-center gap-1 bg-red-50 text-red-600 px-2 py-0.5 rounded-full text-[9px] font-black uppercase">
+                            <Flame className="w-3 h-3" /> High Priority
+                          </span>
+                        )}
+                      </div>
+                    </td>
                     <td className="p-6">
                       <div className="relative group/status flex items-center gap-2">
                         <StatusBadge status={item.status} />

@@ -21,16 +21,17 @@ api.interceptors.request.use(
   }
 );
 
-// Global response interceptor: if auth errors occur, clear token and redirect to login
+// Global response interceptor: route auth errors to the correct login page
 api.interceptors.response.use(
   response => response,
   (error) => {
     const status = error?.response?.status;
     if (status === 401 || status === 403) {
       try {
+        const isOfficer = !!localStorage.getItem('officer');
         localStorage.removeItem('token');
-        // Redirect to login page
-        window.location.href = '/login';
+        localStorage.removeItem('officer');
+        window.location.href = isOfficer ? '/officer-login' : '/login';
       } catch (e) {
         // ignore
       }
@@ -79,6 +80,18 @@ export const complaintService = {
   getOfficerComplaints: async () => {
     const response = await api.get('/officer/complaints');
     return response.data;
+  },
+  getOfficerStats: async () => {
+    const response = await api.get('/officer/stats');
+    return response.data;
+  },
+  getMyDepartment: async () => {
+    const response = await api.get('/officer/me/department');
+    return response.data;
+  },
+  getPradhanComplaints: async () => {
+    const response = await api.get('/officer/pradhan/complaints');
+    return response.data.complaints || []; // unwrap the { complaints, total, department } envelope
   },
   updateComplaintStatus: async (id, status) => {
     const response = await api.put(`/officer/complaints/${id}/status`, { status });

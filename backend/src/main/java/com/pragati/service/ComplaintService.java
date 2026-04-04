@@ -175,13 +175,68 @@ public class ComplaintService {
         }
     }
 
+    // ─── DEPARTMENT → CATEGORY MAPPING ───────────────────────────────────────────
+
+    private static final Map<String, List<String>> DEPT_CATEGORIES = new java.util.LinkedHashMap<>();
+    static {
+        DEPT_CATEGORIES.put("JAL_VIBHAG",   List.of("WATER", "WATER_SUPPLY", "DRINKING_WATER", "SEWAGE"));
+        DEPT_CATEGORIES.put("ELECTRICITY",   List.of("ELECTRICITY", "POWER", "STREETLIGHT", "LIGHT"));
+        DEPT_CATEGORIES.put("ROAD",          List.of("ROAD", "ROADS", "POTHOLE", "TRANSPORT", "DRAINAGE"));
+        DEPT_CATEGORIES.put("SWACHHTA",      List.of("SANITATION", "CLEANLINESS", "SWACHHTA", "GARBAGE", "WASTE"));
+        DEPT_CATEGORIES.put("NAGAR_NIGAM",   List.of("MUNICIPAL", "NAGAR", "BUILDING", "CONSTRUCTION"));
+        // PRADHAN and BDO see ALL — not listed here
+    }
+
+    private boolean categoryMatchesDepartment(String category, String department) {
+        // These roles/departments see ALL complaints with no filtering
+        if (department == null || department.isBlank()
+                || department.equalsIgnoreCase("BDO")
+                || department.equalsIgnoreCase("PRADHAN")) {
+            return true;
+        }
+        List<String> allowedCategories = DEPT_CATEGORIES.get(department.toUpperCase());
+        if (allowedCategories == null) return true; // unknown dept → safe fallback: see all
+        String cat = category != null ? category.toUpperCase() : "";
+        return allowedCategories.stream().anyMatch(cat::contains) ||
+               allowedCategories.stream().anyMatch(a -> a.contains(cat) && !cat.isEmpty());
+    }
+
     // ─── OFFICER VIEW ─────────────────────────────────────────────────────────────
 
     @Transactional(readOnly = true)
     public List<ComplaintDTO> getAllComplaintsForOfficer() {
+        return getAllComplaintsForOfficer(null); // fallback: no filter
+    }
+
+    @Transactional(readOnly = true)
+    public List<ComplaintDTO> getAllComplaintsForOfficer(String officerDepartment) {
         return complaintRepository.findAllByOrderByCreatedAtDesc().stream()
+                .filter(c -> categoryMatchesDepartment(c.getCategory(), officerDepartment))
                 .map(this::mapToOfficerDTO)
+                // Sort: supportCount DESC, then createdAt DESC
+                .sorted((a, b) -> {
+                    int sc = Long.compare(b.getSupportCount(), a.getSupportCount());
+                    if (sc != 0) return sc;
+                    if (a.getCreatedAt() != null && b.getCreatedAt() != null)
+                        return b.getCreatedAt().compareTo(a.getCreatedAt());
+                    return 0;
+                })
                 .collect(Collectors.toList());
+    }
+
+    // ─── OFFICER STATS ────────────────────────────────────────────────────────────
+
+    @Transactional(readOnly = true)
+    public Map<String, Long> getOfficerStats(String officerDepartment) {
+        List<Complaint> all = complaintRepository.findAll().stream()
+                .filter(c -> categoryMatchesDepartment(c.getCategory(), officerDepartment))
+                .collect(Collectors.toList());
+        Map<String, Long> stats = new java.util.LinkedHashMap<>();
+        stats.put("total", (long) all.size());
+        stats.put("pending", all.stream().filter(c -> c.getStatus() == ComplaintStatus.PENDING).count());
+        stats.put("inProgress", all.stream().filter(c -> c.getStatus() == ComplaintStatus.IN_PROGRESS).count());
+        stats.put("resolved", all.stream().filter(c -> c.getStatus() == ComplaintStatus.RESOLVED).count());
+        return stats;
     }
 
     // ─── MAPPING HELPERS ──────────────────────────────────────────────────────────
@@ -218,12 +273,19 @@ public class ComplaintService {
         String baseUrl = "http://localhost:8080";
         String attachmentUrl = (c.getImageUrl() != null && !c.getImageUrl().isEmpty())
                 ? baseUrl + c.getImageUrl() : null;
+        long count = supportRepository.countByComplaintId(c.getId());
         return ComplaintDTO.builder()
-                .id(c.getId()).title(c.getTitle()).description(c.getDescription())
-                .category(c.getCategory()).location(c.getLocation())
+                .id(c.getId())
+                .title(c.getTitle() != null ? c.getTitle() : "No Title")
+                .description(c.getDescription() != null ? c.getDescription() : "No Description")
+                .category(c.getCategory() != null ? c.getCategory() : "GENERAL")
+                .location(c.getLocation() != null ? c.getLocation() : "Unknown")
                 .status(c.getStatus() != null ? c.getStatus().name() : "PENDING")
-                .createdAt(c.getCreatedAt()).attachmentPath(attachmentUrl)
-                .blockchainTxnId(c.getBlockchainTxnId()).build();
+                .createdAt(c.getCreatedAt())
+                .attachmentPath(attachmentUrl)
+                .blockchainTxnId(c.getBlockchainTxnId())
+                .supportCount(count)
+                .build();
     }
 
     private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {

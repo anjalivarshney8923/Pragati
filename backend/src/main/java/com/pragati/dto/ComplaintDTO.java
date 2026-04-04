@@ -20,4 +20,5 @@ public class ComplaintDTO {
     private String attachmentPath;
     private LocalDateTime createdAt;
     private String blockchainTxnId;
+    private long supportCount;
 }

@@ -5,15 +5,16 @@ import {
   CheckCircle, 
   IndianRupee, 
   TrendingUp, 
-  TrendingDown,
   Clock,
-  ArrowRight
+  ArrowRight,
+  BadgeCheck
 } from 'lucide-react';
 import { 
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Legend
 } from 'recharts';
 import DashboardCard from '../../components/governance/DashboardCard';
 import StatusBadge from '../../components/governance/StatusBadge';
+import { complaintService } from '../../services/api';
 
 const crore = 10_000_000;
 
@@ -32,11 +33,39 @@ const recentComplaints = [
   { id: 'CMP-1026', name: 'Ramesh Singh', category: 'Roads', status: 'RESOLVED', date: '2026-03-28' },
 ];
 
+const DEPT_LABELS = {
+  BDO:         'Block Development Officer',
+  PRADHAN:     'Gram Pradhan',
+  JAL_VIBHAG:  'Jal Vibhag',
+  ELECTRICITY: 'Electricity Vibhag',
+  ROAD:        'Road Vibhag',
+  SWACHHTA:    'Swachhta Vibhag',
+  NAGAR_NIGAM: 'Nagar Nigam',
+};
+
 const Overview = () => {
   const [schemeData, setSchemeData] = useState([]);
   const [totalAllocated, setTotalAllocated] = useState('...');
+  const [stats, setStats] = useState({ total: 0, pending: 0, inProgress: 0, resolved: 0 });
+  const [statsLoading, setStatsLoading] = useState(true);
+
+  // Read officer details from localStorage
+  const officerData = (() => {
+    try { return JSON.parse(localStorage.getItem('officer') || '{}'); } catch { return {}; }
+  })();
+  const officerName = officerData.fullName || 'Officer';
+  const deptKey = officerData.department || 'BDO';
+  const deptLabel = DEPT_LABELS[deptKey] || deptKey;
+  const updateTime = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
 
   useEffect(() => {
+    // Live complaint stats
+    complaintService.getOfficerStats()
+      .then(data => setStats(data))
+      .catch(err => console.warn('Stats load failed, using fallback:', err))
+      .finally(() => setStatsLoading(false));
+
+    // Fund data from CSV
     fetch('/data/up_large_dataset.csv')
       .then(r => r.text())
       .then(text => {
@@ -65,13 +94,21 @@ const Overview = () => {
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold text-[#1E3A8A] uppercase tracking-tighter">System Overview</h1>
-          <p className="text-slate-500 font-bold text-xs uppercase tracking-widest mt-1">Real-time analytical summary for GramSetu Administration</p>
+          <div className="flex items-center gap-3 mb-1">
+            <h1 className="text-3xl font-extrabold text-[#1E3A8A] uppercase tracking-tighter">Pragati Overview</h1>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest bg-blue-50 text-blue-700 border border-blue-100">
+              <BadgeCheck className="w-3.5 h-3.5" />
+              {deptLabel}
+            </span>
+          </div>
+          <p className="text-slate-500 font-bold text-xs uppercase tracking-widest">
+            Namaskar, <span className="text-[#1E3A8A]">{officerName}</span> — Real-time analytical summary
+          </p>
         </div>
         <div className="flex items-center gap-3">
            <div className="px-5 py-2.5 bg-white border border-slate-200 rounded-2xl shadow-sm flex items-center gap-3">
               <Clock className="w-4 h-4 text-blue-600" />
-              <span className="text-xs font-black text-slate-700 uppercase tracking-widest">Last Update: 12:45 PM</span>
+              <span className="text-xs font-black text-slate-700 uppercase tracking-widest">Updated: {updateTime}</span>
            </div>
            <button className="px-6 py-2.5 bg-[#1E3A8A] text-white rounded-2xl shadow-xl shadow-blue-100 hover:bg-[#1a3278] transition-all font-black uppercase tracking-widest text-[10px] flex items-center gap-2">
               Generate Report
@@ -80,30 +117,30 @@ const Overview = () => {
         </div>
       </div>
 
-      {/* Metric Cards Grid */}
+      {/* Metric Cards Grid — Live Data */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <DashboardCard 
-          title="Total Villagers" 
-          value="12,540" 
-          icon={Users} 
+          title="Total Complaints" 
+          value={statsLoading ? '...' : (stats.total ?? 0).toString()}
+          icon={MessageSquare} 
           trend="up" 
-          trendValue="+3.2%" 
+          trendValue="Live Data"
           color="blue" 
         />
         <DashboardCard 
-          title="Pending Complaints" 
-          value="156" 
-          icon={MessageSquare} 
+          title="Pending" 
+          value={statsLoading ? '...' : (stats.pending ?? 0).toString()}
+          icon={Clock} 
           trend="down" 
-          trendValue="-12%" 
+          trendValue="Needs Action" 
           color="orange" 
         />
         <DashboardCard 
-          title="Approved Officers" 
-          value="24" 
+          title="Resolved" 
+          value={statsLoading ? '...' : (stats.resolved ?? 0).toString()}
           icon={CheckCircle} 
           trend="up" 
-          trendValue="+2" 
+          trendValue="Completed" 
           color="green" 
         />
         <DashboardCard 

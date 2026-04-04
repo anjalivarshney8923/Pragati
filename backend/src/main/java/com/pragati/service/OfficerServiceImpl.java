@@ -62,7 +62,7 @@ public class OfficerServiceImpl implements OfficerService {
                 .govtIdFilePath(govtIdPath)
                 .appointmentLetterFilePath(appointmentPath)
                 .role(OfficerRole.OFFICER)
-                .status(OfficerStatus.PENDING)
+                .status(OfficerStatus.APPROVED) // Auto-approved; admin review flow can be added later
                 .build();
 
         Officer savedOfficer = officerRepository.save(officer);
@@ -147,6 +147,9 @@ public class OfficerServiceImpl implements OfficerService {
                 .employeeId(officer.getEmployeeId())
                 .role(officer.getRole().name())
                 .status(officer.getStatus().name())
+                .department(officer.getDepartment())
+                .designation(officer.getDesignation())
+                .district(officer.getDistrict())
                 .token(token)
                 .build();
     }

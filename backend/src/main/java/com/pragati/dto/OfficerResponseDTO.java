@@ -16,5 +16,8 @@ public class OfficerResponseDTO {
     private String employeeId;
     private String role;
     private String status;
+    private String department;
+    private String designation;
+    private String district;
     private String token;
 }

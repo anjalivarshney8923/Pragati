@@ -20,7 +20,6 @@ const OfficerLogin = () => {
     setErrorMessage('');
     
     try {
-      // Connect to the new /api/auth/login-officer endpoint
       const response = await authService.loginOfficer({
         email: data.email,
         password: data.password
@@ -29,7 +28,21 @@ const OfficerLogin = () => {
       if (response.token) {
         localStorage.setItem('token', response.token);
         localStorage.setItem('officer', JSON.stringify(response));
-        navigate('/governance/overview'); 
+
+        // Department-based routing:
+        // PRADHAN → dedicated Pradhan complaints dashboard (real DB data)
+        // BDO     → full system overview
+        // others  → department-filtered complaints
+        const dept = response.department || '';
+        let destination;
+        if (dept === 'PRADHAN') {
+          destination = '/governance/pradhan';
+        } else if (dept === 'BDO' || dept === '') {
+          destination = '/governance/overview';
+        } else {
+          destination = '/governance/complaints';
+        }
+        navigate(destination);
       }
     } catch (err) {
       console.error("Login Error:", err);

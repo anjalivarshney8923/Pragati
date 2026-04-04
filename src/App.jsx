@@ -22,6 +22,7 @@ import MyRights from './pages/dashboard/MyRights';
 import GovernanceLayout from './layouts/GovernanceLayout';
 import Overview from './pages/governance/Overview';
 import Complaints from './pages/governance/Complaints';
+import PradhanDashboard from './pages/governance/PradhanDashboard';
 import Citizens from './pages/governance/Citizens';
 import Funds from './pages/governance/Funds';
 import Reports from './pages/governance/Reports';
@@ -69,6 +70,7 @@ function App() {
           <Route path="/governance" element={<GovernanceLayout />}>
              <Route path="overview" element={<Overview />} />
              <Route path="complaints" element={<Complaints />} />
+             <Route path="pradhan" element={<PradhanDashboard />} />
              <Route path="citizens" element={<Citizens />} />
              <Route path="funds" element={<Funds />} />
              <Route path="reports" element={<Reports />} />
