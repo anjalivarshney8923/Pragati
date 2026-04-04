@@ -24,6 +24,7 @@ public class ComplaintResponseDTO {
     private LocalDateTime createdAt;
     private String userFullName;
     private String blockchainTxnId;
+    private String blockchainHash;
     private Integer supportCount;
     private Boolean isSupportedByCurrentUser;
 }

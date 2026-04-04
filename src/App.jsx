@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import Chatbot from './components/Chatbot';
 import LandingPage from './pages/LandingPage';
 import Login from './pages/Login';
@@ -49,6 +50,7 @@ const Placeholder = ({ title }) => (
 function App() {
   return (
     <Router>
+      <Toaster position="top-right" toastOptions={{ duration: 4000, style: { background: '#333', color: '#fff', fontSize: '12px', fontWeight: 'bold' } }} />
       <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
         <ToastContainer position="top-right" autoClose={3000} hideProgressBar theme="colored" />
         <Routes>

@@ -80,6 +80,7 @@ def village_funds(village, year, sub_village):
 
 
 
+@app.route('/store-hash', methods=['POST'])
 def store_hash():
     try:
         # Get complaint data from request
@@ -125,6 +126,21 @@ def store_hash():
 
     except Exception as e:
         print(f"Blockchain Error: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/calculate-hash', methods=['POST'])
+def calculate_hash():
+    try:
+        data = request.json
+        if not data:
+            return jsonify({"error": "No data supplied"}), 400
+        
+        # Consistent sorting/spacing for verification
+        data_string = json.dumps(data, sort_keys=True)
+        h = hashlib.sha256(data_string.encode()).hexdigest()
+        
+        return jsonify({"hash": h}), 200
+    except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 @app.route('/extract_dob', methods=['POST'])
@@ -192,6 +208,5 @@ def verify_face():
 
 
 if __name__ == '__main__':
-    # Running on port 5000 by default
-    print("AI-Blockchain Service started on port 5002")
-    app.run(host='0.0.0.0', port=5002, debug=True, use_reloader=False)
+    print("AI-Blockchain Service started on port 5001")
+    app.run(host='0.0.0.0', port=5001, debug=True, use_reloader=False)

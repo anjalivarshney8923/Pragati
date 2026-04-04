@@ -58,6 +58,9 @@ public class Complaint {
     @Column(name = "blockchain_txn_id")
     private String blockchainTxnId;
 
+    @Column(name = "blockchain_hash")
+    private String blockchainHash;
+
     @Column(unique = true)
     private String complaintToken;
 

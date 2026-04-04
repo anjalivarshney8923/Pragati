@@ -20,7 +20,19 @@ public class SchemaFixRunner implements CommandLineRunner {
             // 1. Add user_id column if it doesn't exist
             jdbcTemplate.execute("ALTER TABLE notifications ADD COLUMN IF NOT EXISTS user_id BIGINT");
             jdbcTemplate.execute("ALTER TABLE complaints ADD COLUMN IF NOT EXISTS bdo_escalation_time TIMESTAMP");
-            log.info("[DB Migration] Success: Column 'user_id' and 'bdo_escalation_time' checked.");
+            jdbcTemplate.execute("ALTER TABLE complaints ADD COLUMN IF NOT EXISTS blockchain_hash VARCHAR(255)");
+            
+            // 2. Create 'work_proofs' table if it doesn't exist
+            jdbcTemplate.execute("CREATE TABLE IF NOT EXISTS work_proofs (" +
+                "id SERIAL PRIMARY KEY, " +
+                "complaint_id BIGINT, " +
+                "description TEXT, " +
+                "image_url VARCHAR(255), " +
+                "blockchain_txn_id VARCHAR(255), " +
+                "blockchain_hash VARCHAR(255), " +
+                "created_at TIMESTAMP)");
+            
+            log.info("[DB Migration] Success: Columns and 'work_proofs' table checked.");
 
             // 2. Data Cleaning: Ensure no rows violate the upcoming constraint
             try {

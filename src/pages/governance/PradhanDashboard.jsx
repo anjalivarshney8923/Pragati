@@ -9,15 +9,20 @@ import {
   Flame,
   BadgeCheck,
   RefreshCw,
-  ExternalLink
+  ExternalLink,
+  Shield,
+  Camera,
+  Lock,
+  ArrowRight
 } from 'lucide-react';
 import StatusBadge from '../../components/governance/StatusBadge';
-import { complaintService } from '../../services/api';
+import { complaintService, workProofService } from '../../services/api';
 import Loader from '../../components/Loader';
+import WorkProofModal from '../../components/governance/WorkProofModal';
 
-const ALGORAND_EXPLORER = 'https://testnet.algoexplorer.io/tx/';
+const ALGORAND_EXPLORER = 'https://testnet.algoscan.app/tx/';
 
-// ─── PradhanDashboard: Identical UI to Complaints.jsx, calls /api/officer/pradhan/complaints ─────
+// ─── PradhanDashboard: Identical UI to Complaints.jsx, fixed with Work Proof logic ─────
 const PradhanDashboard = () => {
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -25,6 +30,9 @@ const PradhanDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [updatingId, setUpdatingId] = useState(null);
+  const [selectedForProof, setSelectedForProof] = useState(null);
+  const [verificationResults, setVerificationResults] = useState({});
+  const [verifyingId, setVerifyingId] = useState(null);
 
   // Officer info from localStorage
   const officerData = (() => {
@@ -39,7 +47,6 @@ const PradhanDashboard = () => {
   const fetchComplaints = async () => {
     try {
       setLoading(true);
-      // Uses the dedicated Pradhan endpoint: GET /api/officer/pradhan/complaints
       const data = await complaintService.getPradhanComplaints();
       setComplaints(data);
       setError(null);
@@ -61,6 +68,19 @@ const PradhanDashboard = () => {
       alert('Failed to update status: ' + (err.response?.data?.message || err.message));
     } finally {
       setUpdatingId(null);
+    }
+  };
+
+  const handleVerifyProof = async (item) => {
+    try {
+      setVerifyingId(item.id);
+      const result = await complaintService.verifyComplaintIntegrity(item.id);
+      setVerificationResults(prev => ({ ...prev, [item.id]: result.verified }));
+    } catch (err) {
+      console.error('Verification failed:', err);
+      alert('Verification failed: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setVerifyingId(null);
     }
   };
 
@@ -180,11 +200,9 @@ const PradhanDashboard = () => {
         <div className="overflow-x-auto">
           {filteredComplaints.length === 0 ? (
             <div className="text-center py-20">
-              <FileText className="w-12 h-12 text-slate-200 mx-auto mb-4" />
               <p className="text-slate-400 font-black uppercase text-sm tracking-widest">
                 No complaints found
               </p>
-              <p className="text-slate-300 text-xs mt-2">Try adjusting your search or status filter</p>
             </div>
           ) : (
             <table className="w-full">
@@ -197,11 +215,11 @@ const PradhanDashboard = () => {
                   <th className="p-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Community Support</th>
                   <th className="p-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Status Control</th>
                   <th className="p-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Received</th>
-                  <th className="p-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Blockchain</th>
+                  <th className="p-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Blockchain Proof</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredComplaints.map((item, idx) => {
+                {filteredComplaints.map((item) => {
                   const isHighPriority = (item.supportCount || 0) >= 5;
                   return (
                     <tr
@@ -210,7 +228,6 @@ const PradhanDashboard = () => {
                         isHighPriority ? 'bg-red-50/30 hover:bg-red-50/50' : 'hover:bg-slate-50/50'
                       }`}
                     >
-                      {/* ID */}
                       <td className="p-6">
                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white text-xs font-black ${
                           isHighPriority ? 'bg-red-500' : 'bg-[#1E3A8A]'
@@ -219,53 +236,36 @@ const PradhanDashboard = () => {
                         </div>
                       </td>
 
-                      {/* Title + Category */}
                       <td className="p-6">
-                        <div className="flex items-center gap-3">
-                          {item.attachmentPath ? (
-                            <ImageIcon className="w-4 h-4 text-slate-400 flex-shrink-0" />
-                          ) : (
-                            <FileText className="w-4 h-4 text-slate-400 flex-shrink-0" />
-                          )}
-                          <div>
-                            <p className="text-sm font-black text-slate-900">
-                              {item.title || 'No Title'}
-                            </p>
-                            <span className="text-[9px] font-black uppercase tracking-widest bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">
-                              {item.category || 'GENERAL'}
-                            </span>
-                          </div>
+                        <div>
+                          <p className="text-sm font-black text-slate-900">
+                            {item.title || 'No Title'}
+                          </p>
+                          <span className="text-[9px] font-black uppercase tracking-widest bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">
+                            {item.category || 'GENERAL'}
+                          </span>
                         </div>
                       </td>
 
-                      {/* Description */}
                       <td className="p-6 max-w-[200px]">
-                        <p className="text-xs text-slate-500 font-medium line-clamp-2 leading-relaxed" title={item.description}>
+                        <p className="text-xs text-slate-500 font-medium line-clamp-2 leading-relaxed">
                           {item.description || 'No description provided.'}
                         </p>
                       </td>
 
-                      {/* Location */}
                       <td className="p-6 text-xs font-bold text-slate-600 italic">
                         {item.location || '—'}
                       </td>
 
-                      {/* Support count */}
                       <td className="p-6">
                         <div className="flex flex-col items-start gap-1">
                           <div className="flex items-center gap-1.5">
                             <span className="text-xl font-black text-[#1E3A8A]">{item.supportCount || 0}</span>
                             <span className="text-[9px] text-slate-400 font-bold uppercase">supports</span>
                           </div>
-                          {isHighPriority && (
-                            <span className="flex items-center gap-1 bg-red-500 text-white px-2 py-0.5 rounded-full text-[9px] font-black uppercase">
-                              <Flame className="w-3 h-3" /> High Priority
-                            </span>
-                          )}
                         </div>
                       </td>
 
-                      {/* Status control */}
                       <td className="p-6">
                         <div className="flex flex-col gap-2">
                           <StatusBadge status={item.status} />
@@ -277,46 +277,67 @@ const PradhanDashboard = () => {
                                 onClick={() => handleStatusUpdate(item.id, s)}
                                 className={`px-2 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all ${
                                   item.status === s
-                                    ? s === 'RESOLVED' ? 'bg-emerald-100 text-emerald-700'
-                                      : s === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-700'
-                                      : 'bg-amber-100 text-amber-700'
+                                    ? s === 'RESOLVED' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'
                                     : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-                                } disabled:opacity-40`}
+                                }`}
                               >
-                                {updatingId === item.id ? '...' : s === 'IN_PROGRESS' ? 'WIP' : s.charAt(0) + s.slice(1).toLowerCase().replace('_', ' ')}
+                                {updatingId === item.id ? '...' : s.charAt(0)}
                               </button>
                             ))}
                           </div>
+                          {item.status === 'RESOLVED' && !item.blockchainTxnId && (
+                            <button
+                              onClick={() => setSelectedForProof(item)}
+                              className="mt-1 flex items-center justify-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white rounded-xl text-[9px] font-black uppercase hover:bg-indigo-700 transition-all shadow-sm"
+                            >
+                              <Camera className="w-3 h-3" /> Proof
+                            </button>
+                          )}
                         </div>
                       </td>
 
-                      {/* Date */}
                       <td className="p-6">
-                        <div className="flex items-center gap-2">
-                          <Clock className="w-3.5 h-3.5 text-slate-400" />
-                          <span className="text-xs font-bold text-slate-600">
-                            {item.createdAt
-                              ? new Date(item.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
-                              : '—'}
-                          </span>
-                        </div>
+                        <span className="text-xs font-bold text-slate-600">
+                          {item.createdAt ? new Date(item.createdAt).toLocaleDateString('en-IN') : '—'}
+                        </span>
                       </td>
 
-                      {/* Blockchain */}
                       <td className="p-6">
                         {item.blockchainTxnId ? (
-                          <a
-                            href={`${ALGORAND_EXPLORER}${item.blockchainTxnId}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-indigo-700 hover:text-white transition-all"
-                          >
-                            <ExternalLink className="w-3 h-3" />
-                            View
-                          </a>
-                        ) : (
-                          <span className="text-[9px] text-slate-300 font-bold uppercase">No hash</span>
-                        )}
+                             <div className="flex flex-col gap-1.5">
+                               <a
+                                href={`${ALGORAND_EXPLORER}${item.blockchainTxnId}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-xl text-[9px] font-black uppercase hover:bg-indigo-700 hover:text-white transition-all shadow-sm"
+                              >
+                                <ExternalLink className="w-3 h-3" />
+                                Txn
+                              </a>
+                              
+                              <button
+                                onClick={() => handleVerifyProof(item)}
+                                disabled={verifyingId === item.id}
+                                className={`flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-[9px] font-black uppercase transition-all ${
+                                  verificationResults[item.id] === true ? 'bg-green-100 text-green-700 border border-green-200' :
+                                  verificationResults[item.id] === false ? 'bg-red-100 text-red-700 border border-red-200' :
+                                  'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+                                } shadow-sm`}
+                              >
+                                {verifyingId === item.id ? (
+                                  <Loader variant="blue" size="small" />
+                                ) : verificationResults[item.id] === true ? (
+                                  <><Shield className="w-3 h-3" /> Verified</>
+                                ) : verificationResults[item.id] === false ? (
+                                  <><AlertCircle className="w-3 h-3" /> Tampered</>
+                                ) : (
+                                  <><BadgeCheck className="w-3 h-3" /> Verify</>
+                                )}
+                              </button>
+                             </div>
+                          ) : (
+                            <span className="text-[9px] text-slate-300 font-bold uppercase">No Proof</span>
+                          )}
                       </td>
                     </tr>
                   );
@@ -326,14 +347,16 @@ const PradhanDashboard = () => {
           )}
         </div>
 
-        {/* Footer */}
-        <div className="p-6 border-t border-gray-100 flex justify-between items-center">
-          <span className="text-xs font-black text-slate-400 uppercase tracking-widest">
-            Showing {filteredComplaints.length} of {complaints.length} complaints
-          </span>
-          <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">
-            Source: PostgreSQL · Live Data
-          </span>
+        {selectedForProof && (
+          <WorkProofModal 
+            complaint={selectedForProof} 
+            onClose={() => setSelectedForProof(null)} 
+            onRefresh={fetchComplaints}
+          />
+        )}
+
+        <div className="p-6 border-t border-gray-100 flex justify-between items-center text-[10px] font-black text-slate-400 uppercase tracking-widest">
+          <span>Source: PostgreSQL · Blockchain Verified resolution flow</span>
         </div>
       </div>
     </div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, Component } from 'react';
 import { complaintService } from '../../services/api';
-import { CheckCircle, Clock, AlertCircle, MapPin, Navigation, ThumbsUp, Repeat, User as UserIcon, ArrowUpCircle } from 'lucide-react';
+import { CheckCircle, Clock, AlertCircle, MapPin, Navigation, ThumbsUp, Repeat, User as UserIcon, ArrowUpCircle, Shield, ExternalLink, Activity } from 'lucide-react';
 import Loader from '../../components/Loader';
 
 // Simple Error Boundary for the component
@@ -35,6 +35,8 @@ const MyComplaintsContent = () => {
   const [supportingIds, setSupportingIds] = useState(new Set());
   const [escalatingIds, setEscalatingIds] = useState(new Set());
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [verifyingIds, setVerifyingIds] = useState(new Set());
+  const [verificationResults, setVerificationResults] = useState({});
   const pollingRef = useRef({});
 
   useEffect(() => {
@@ -148,6 +150,19 @@ const MyComplaintsContent = () => {
         next.delete(id);
         return next;
       });
+    }
+  };
+
+  const handleVerify = async (id) => {
+    if (verifyingIds.has(id)) return;
+    setVerifyingIds(prev => new Set(prev).add(id));
+    try {
+      const res = await complaintService.verifyComplaintIntegrity(id);
+      setVerificationResults(prev => ({ ...prev, [id]: res }));
+    } catch (err) {
+      alert("Could not reach blockchain bridge for verification.");
+    } finally {
+      setVerifyingIds(prev => { const n = new Set(prev); n.delete(id); return n; });
     }
   };
 
@@ -283,11 +298,43 @@ const MyComplaintsContent = () => {
                   </div>
 
                   <div className="flex flex-wrap items-center justify-between gap-4 pt-6 border-t border-slate-50">
-                    <div className="flex gap-3">
+                    <div className="flex gap-3 items-center">
                       {c?.imageUrl && (
-                        <a href={c.imageUrl} target="_blank" rel="noreferrer" className="text-[10px] font-black text-blue-600 hover:text-blue-800 transition-colors uppercase tracking-widest bg-blue-50 px-4 py-2.5 rounded-xl border border-blue-100">
+                        <a href={c.imageUrl} target="_blank" rel="noreferrer" className="text-[10px] font-black text-blue-600 hover:text-blue-800 transition-colors uppercase tracking-widest bg-blue-50 px-4 py-2.5 rounded-xl border border-blue-100 flex items-center gap-1.5 focus:ring-2 focus:ring-blue-100">
                           View Proof
                         </a>
+                      )}
+                      
+                      {/* Blockchain Proof Section */}
+                      {c?.blockchainTxnId && (
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleVerify(c.id)}
+                            disabled={verifyingIds.has(c.id)}
+                            className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-[10px] font-black transition-all border ${
+                              verificationResults[c.id]?.verified
+                                ? 'bg-green-50 text-green-700 border-green-200'
+                                : verificationResults[c.id]?.verified === false
+                                  ? 'bg-red-50 text-red-700 border-red-200 animate-pulse'
+                                  : 'bg-indigo-50 text-indigo-700 border-indigo-100 hover:bg-indigo-100'
+                            }`}
+                          >
+                            <Shield size={13} className={verifyingIds.has(c.id) ? "animate-spin" : ""} />
+                            {verifyingIds.has(c.id) ? 'Verifying...' : 
+                             verificationResults[c.id]?.verified ? 'Verified ✅' : 
+                             verificationResults[c.id]?.verified === false ? 'Tampered ⚠️' : 'Verify Integrity'}
+                          </button>
+
+                          <a 
+                            href={`https://testnet.algoscan.app/tx/${c.blockchainTxnId}`} 
+                            target="_blank" 
+                            rel="noreferrer"
+                            title="View on Algorand Explorer"
+                            className="p-2.5 bg-slate-50 text-slate-400 hover:text-primary rounded-xl border border-slate-100 transition-colors"
+                          >
+                            <ExternalLink size={14} />
+                          </a>
+                        </div>
                       )}
                     </div>
 

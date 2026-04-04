@@ -30,7 +30,47 @@ public class ComplaintService {
     private final BDOComplaintRepository bdoComplaintRepository;
     private final NotificationRepository notificationRepository;
     private final EscalationService escalationService;
+<<<<<<< HEAD
     private final EmailService emailService;
+=======
+    private final ComplaintBlockchainLogRepository blockchainLogRepository;
+
+    // ─── BLOCKCHAIN AUDIT LOGGING ───────────────────────────────────────────────
+    
+    private void logToBlockchain(Long complaintId, String stage, String officer, String status) {
+        try {
+            System.out.println("🛡️ Anchoring escalation stage [" + stage + "] to blockchain...");
+            
+            // Prepare structured data for immutability
+            Map<String, Object> auditData = new HashMap<>();
+            auditData.put("complaintId", complaintId);
+            auditData.put("stage", stage);
+            auditData.put("timestamp", LocalDateTime.now().toString());
+            auditData.put("officer", officer);
+            auditData.put("status", status);
+
+            // Call Algorand-Flask bridge
+            Map<String, String> proof = blockchainService.storeComplaintHash(auditData);
+
+            if (proof != null && proof.get("txnId") != null) {
+                ComplaintBlockchainLog logEntry = ComplaintBlockchainLog.builder()
+                        .complaintId(complaintId)
+                        .stage(stage)
+                        .blockchainTxnId(proof.get("txnId"))
+                        .blockchainHash(proof.get("hash"))
+                        .build();
+                blockchainLogRepository.save(logEntry);
+                System.out.println("✅ Lifecycle stage anchored: " + proof.get("txnId"));
+            } else {
+                System.err.println("❌ Blockchain escalation log failed (null response)");
+            }
+        } catch (Exception e) {
+            // Requirement 6: Soft failure - do NOT break escalation if blockchain fails
+            System.err.println("⚠️ Blockchain Audit Warning (Stage: " + stage + "): " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+>>>>>>> 59dcf06 (Blockchain fix)
 
     // ─── CREATE COMPLAINT ────────────────────────────────────────────────────────
 
@@ -45,9 +85,8 @@ public class ComplaintService {
             imageUrl = fileStorageService.saveFile(request.getImage());
         }
 
-        String txnId = blockchainService.getBlockchainTxnId(request.getDescription());
         String token = generateUniqueToken();
-
+        
         Complaint complaint = Complaint.builder()
                 .title(request.getTitle())
                 .description(request.getDescription())
@@ -57,13 +96,37 @@ public class ComplaintService {
                 .longitude(request.getLongitude())
                 .imageUrl(imageUrl)
                 .user(user)
-                .blockchainTxnId(txnId)
                 .complaintToken(token)
                 .build();
 
+        // Step 1: Prepare blockchain data BEFORE saving
+        Map<String, Object> blockchainData = new HashMap<>();
+        blockchainData.put("title", complaint.getTitle());
+        blockchainData.put("description", complaint.getDescription());
+        blockchainData.put("userId", user.getId());
+        blockchainData.put("createdAt", LocalDateTime.now().toString());
+
+        System.out.println("🚀 Sending to blockchain BEFORE save");
+
+        // Step 2: Call blockchain service
+        Map<String, String> proof = blockchainService.storeComplaintHash(blockchainData);
+
+        // Step 3: Set blockchain values in entity
+        if (proof != null && proof.get("txnId") != null) {
+            complaint.setBlockchainTxnId(proof.get("txnId"));
+            complaint.setBlockchainHash(proof.get("hash"));
+            System.out.println("🔗 txnId set: " + proof.get("txnId"));
+        } else {
+            System.out.println("❌ Blockchain anchor failed or returned null");
+        }
+
+        // Step 4: Save record ONLY ONCE (Atomic)
         Complaint saved = complaintRepository.save(complaint);
+        System.out.println("💾 Complaint saved with ID: " + saved.getId() + " and TxnId: " + saved.getBlockchainTxnId());
+
         escalationService.scheduleEscalation(saved.getId(), user.getId(), token);
         
+<<<<<<< HEAD
         // Save Dashboard Notification
         notificationRepository.save(Notification.builder()
                 .userId(user.getId())
@@ -75,6 +138,11 @@ public class ComplaintService {
                 
         // Trigger Async Email Notification
         emailService.sendComplaintCreatedEmail(user, saved);
+=======
+        // Requirement 1 & 5: Blockchain Escalation Tracking (Soft-fail log)
+        logToBlockchain(saved.getId(), "CREATED", user.getFullName(), "PENDING");
+        logToBlockchain(saved.getId(), "ESCALATED_TO_PRADHAN", "Gram Pradhan", "PENDING");
+>>>>>>> 59dcf06 (Blockchain fix)
         
         return mapToDTO(saved, user.getId());
     }
@@ -122,6 +190,9 @@ public class ComplaintService {
                 .type(NotificationType.ESCALATION)
                 .build());
 
+        // Requirement 1 & 5: Stage-based blockchain anchoring
+        logToBlockchain(complaintId, "ESCALATED_TO_VIBHAG", dept, "IN_PROGRESS");
+
         return mapToDTO(complaint, user.getId());
     }
 
@@ -163,6 +234,9 @@ public class ComplaintService {
                 .type(NotificationType.ESCALATION)
                 .build());
 
+        // Requirement 1 & 5: Stage-based blockchain anchoring
+        logToBlockchain(complaintId, "ESCALATED_TO_BDO", "BDO", "IN_PROGRESS");
+
         return mapToDTO(complaint, user.getId());
     }
 
@@ -175,6 +249,46 @@ public class ComplaintService {
         Complaint complaint = complaintRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Complaint not found"));
         return mapToDTO(complaint, user.getId());
+    }
+
+    @Transactional(readOnly = true)
+    public List<ComplaintBlockchainLog> getComplaintHistory(Long id) {
+        return blockchainLogRepository.findByComplaintIdOrderByTimestampAsc(id);
+    }
+
+    // ─── VERIFY INTEGRITY ─────────────────────────────────────────────────────────
+
+    @Transactional(readOnly = true)
+    public Map<String, Object> verifyComplaintIntegrity(Long id) {
+        Complaint c = complaintRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Complaint not found"));
+
+        if (c.getBlockchainHash() == null || c.getBlockchainTxnId() == null) {
+            Map<String, Object> fail = new HashMap<>();
+            fail.put("verified", false);
+            fail.put("reason", "No blockchain proof found.");
+            return fail;
+        }
+
+        // Re-construct the fingerprint from current DB state
+        Map<String, Object> currentData = new HashMap<>();
+        currentData.put("id", c.getId());
+        currentData.put("title", c.getTitle());
+        currentData.put("description", c.getDescription());
+        currentData.put("userId", c.getUser() != null ? c.getUser().getId() : null);
+        currentData.put("createdAt", c.getCreatedAt() != null ? c.getCreatedAt().toString() : "");
+
+        String currentHash = blockchainService.recalculateHash(currentData);
+        boolean isTamperFree = c.getBlockchainHash().equals(currentHash);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("verified", isTamperFree);
+        result.put("storedHash", c.getBlockchainHash());
+        result.put("currentFingerprint", currentHash);
+        result.put("txnId", c.getBlockchainTxnId());
+        result.put("explorerUrl", "https://testnet.algoscan.app/tx/" + c.getBlockchainTxnId());
+
+        return result;
     }
 
     private String mapCategoryToDepartment(String category) {
@@ -443,6 +557,7 @@ public class ComplaintService {
                 .createdAt(c.getCreatedAt())
                 .userFullName(userFullName)
                 .blockchainTxnId(c.getBlockchainTxnId())
+                .blockchainHash(c.getBlockchainHash())
                 .supportCount((int) count)
                 .isSupportedByCurrentUser(isSupported)
                 .build();
@@ -465,9 +580,10 @@ public class ComplaintService {
                 .createdAt(c.getCreatedAt())
                 .attachmentPath(attachmentUrl)
                 .blockchainTxnId(c.getBlockchainTxnId())
+                .blockchainHash(c.getBlockchainHash())
                 .supportCount(count)
                 .build();
-    }
+}
 
     private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
         final int R = 6371;

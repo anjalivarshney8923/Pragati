@@ -118,6 +118,10 @@ export const complaintService = {
   escalateToBDO: async (id) => {
     const response = await api.post(`/complaints/${id}/escalate/bdo`);
     return response.data;
+  },
+  verifyComplaintIntegrity: async (id) => {
+    const response = await api.get(`/complaints/${id}/verify`);
+    return response.data;
   }
 };
 
