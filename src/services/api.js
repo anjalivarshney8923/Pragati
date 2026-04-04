@@ -145,4 +145,26 @@ export const notificationService = {
   }
 };
 
+export const workProofService = {
+  submitWorkProof: async (complaintId, description, image, beforeImage) => {
+    const formData = new FormData();
+    if (complaintId) formData.append('complaintId', complaintId);
+    formData.append('description', description);
+    formData.append('image', image);
+    if (beforeImage) formData.append('beforeImage', beforeImage);
+    
+    // For FormData, axios usually handles headers automatically but we can be explicit
+    const response = await api.post("/workproof/submit", formData);
+    return response.data;
+  },
+  getAllWorkProofs: async () => {
+    const response = await api.get("/workproof");
+    return response.data;
+  },
+  verifyWorkProof: async (id) => {
+    const response = await api.get(`/workproof/${id}/verify`);
+    return response.data;
+  }
+};
+
 export default api;
