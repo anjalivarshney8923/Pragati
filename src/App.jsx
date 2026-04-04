@@ -18,6 +18,7 @@ import Expenditure from './pages/dashboard/Expenditure';
 import RecentPosts from './pages/dashboard/RecentPosts';
 import MyRights from './pages/dashboard/MyRights';
 import Notifications from './pages/dashboard/Notifications';
+import HelpSupport from './pages/dashboard/HelpSupport';
 
 // Governance Dashboard Components
 import GovernanceLayout from './layouts/GovernanceLayout';
@@ -67,7 +68,7 @@ function App() {
             <Route path="/dashboard/schemes" element={<GovernmentSchemes />} />
             <Route path="/dashboard/posts" element={<RecentPosts />} />
             <Route path="/dashboard/notifications" element={<Notifications />} />
-            <Route path="/dashboard/support" element={<Placeholder title="Help & Support" />} />
+            <Route path="/dashboard/support" element={<HelpSupport />} />
           </Route>
 
           {/* Governance Dashboard Routes (Restricted) */}
