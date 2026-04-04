@@ -1,3 +1,8 @@
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
 import hashlib
 import json
 import re
@@ -11,16 +16,21 @@ from flask_cors import CORS
 from algosdk.v2client import algod
 from algosdk import transaction, mnemonic
 
+
 app = Flask(__name__)
 CORS(app)
 
-# --- YOUR CONFIGURATION ---
-ALGO_ADDRESS = "XFH3YTGVZ3HET7Z3Z2K5JB2GCXCA63J2EWRBGOR2N3XPAX3B56ATB2BCNM"
-ALGO_MNEMONIC = "jewel ivory manage spirit twice behave orange toy floor cigar step kitten capital decorate slot equip siege work car glove deposit risk until above empty"
+# --- YOUR CONFIGURATION ---    
+ALGO_ADDRESS = os.getenv("ALGO_SENDER_ADDRESS")
+ALGO_MNEMONIC = os.getenv("ALGO_MNEMONIC")
 
 # AlgoNode Public TestNet API
-ALGOD_ADDRESS = "https://testnet-api.algonode.cloud"
-ALGOD_TOKEN = "" 
+ALGOD_ADDRESS = os.getenv("ALGOD_SERVER")
+ALGOD_TOKEN = os.getenv("ALGOD_API_KEY") 
+
+# ✅ DEBUG PRINTS (ADD HERE)
+print("ALGOD_ADDRESS:", ALGOD_ADDRESS)
+print("ALGOD_TOKEN:", ALGOD_TOKEN)
 
 # Initialize Client
 algod_client = algod.AlgodClient(ALGOD_TOKEN, ALGOD_ADDRESS)
