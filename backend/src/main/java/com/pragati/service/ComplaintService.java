@@ -97,6 +97,7 @@ public class ComplaintService {
                 .build());
 
         complaint.setStatus(ComplaintStatus.IN_PROGRESS);
+        complaint.setBdoEscalationTime(LocalDateTime.now().plusSeconds(10)); // Window opens in 10s
         complaintRepository.save(complaint);
 
         notificationRepository.save(Notification.builder()
@@ -104,7 +105,7 @@ public class ComplaintService {
                 .relatedComplaintId(complaintId)
                 .title("Escalated to " + dept)
                 .message("Your complaint (" + complaint.getComplaintToken() + ") has been escalated to " + dept + ".")
-                .type("ESCALATION")
+                .type(NotificationType.ESCALATION)
                 .build());
 
         return mapToDTO(complaint, user.getId());
@@ -123,6 +124,12 @@ public class ComplaintService {
             throw new RuntimeException("Unauthorized");
         if (complaint.getEscalationLevel() < 2)
             throw new RuntimeException("Escalation to BDO not yet available");
+        
+        // Timer check
+        if (complaint.getBdoEscalationTime() != null && LocalDateTime.now().isBefore(complaint.getBdoEscalationTime())) {
+            throw new RuntimeException("BDO Escalation will be available at " + complaint.getBdoEscalationTime());
+        }
+
         if (bdoComplaintRepository.existsByComplaintId(complaintId))
             throw new RuntimeException("Already escalated to BDO");
 
@@ -139,7 +146,7 @@ public class ComplaintService {
                 .relatedComplaintId(complaintId)
                 .title("Escalated to BDO")
                 .message("Your complaint (" + complaint.getComplaintToken() + ") has been escalated to the Block Development Officer (BDO).")
-                .type("ESCALATION")
+                .type(NotificationType.ESCALATION)
                 .build());
 
         return mapToDTO(complaint, user.getId());
@@ -402,6 +409,7 @@ public class ComplaintService {
                 .imageUrl(c.getImageUrl())
                 .status(c.getStatus() != null ? c.getStatus().name() : "PENDING")
                 .escalationLevel(level)
+                .bdoEscalationTime(c.getBdoEscalationTime())
                 .canEscalateToVibhag(level >= 1 && !alreadyEscalatedToVibhag)
                 .canEscalateToBDO(level >= 2 && alreadyEscalatedToVibhag && !alreadyEscalatedToBDO)
                 .createdAt(c.getCreatedAt())

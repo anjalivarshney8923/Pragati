@@ -34,7 +34,13 @@ const MyComplaintsContent = () => {
   const [error, setError] = useState(null);
   const [supportingIds, setSupportingIds] = useState(new Set());
   const [escalatingIds, setEscalatingIds] = useState(new Set());
+  const [currentTime, setCurrentTime] = useState(new Date());
   const pollingRef = useRef({});
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     if (activeTab === 'my') {
@@ -302,16 +308,30 @@ const MyComplaintsContent = () => {
                         </button>
                         <button
                           onClick={() => handleEscalate(c?.id, 'bdo')}
-                          disabled={!c?.canEscalateToBDO || escalatingIds.has(`${c?.id}-bdo`)}
-                          title={!c?.canEscalateToBDO ? 'Available after 10 seconds' : 'Escalate to BDO'}
+                          disabled={
+                            !c?.canEscalateToBDO || 
+                            escalatingIds.has(`${c?.id}-bdo`) || 
+                            (c?.bdoEscalationTime && currentTime < new Date(c.bdoEscalationTime))
+                          }
+                          title={
+                            !c?.canEscalateToBDO 
+                              ? 'Vibhag escalation required first' 
+                              : (c?.bdoEscalationTime && currentTime < new Date(c.bdoEscalationTime) 
+                                ? `Available at ${new Date(c.bdoEscalationTime).toLocaleTimeString()}` 
+                                : 'Escalate to BDO')
+                          }
                           className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${
-                            c?.canEscalateToBDO
+                            c?.canEscalateToBDO && (!c?.bdoEscalationTime || currentTime >= new Date(c.bdoEscalationTime))
                               ? 'bg-red-600 text-white border-red-700 hover:bg-red-700 shadow active:scale-95'
                               : 'bg-slate-100 text-slate-300 border-slate-200 cursor-not-allowed'
                           }`}
                         >
                           <ArrowUpCircle size={13} />
-                          {escalatingIds.has(`${c?.id}-bdo`) ? 'Escalating...' : 'Escalate to BDO'}
+                          {escalatingIds.has(`${c?.id}-bdo`) 
+                            ? 'Escalating...' 
+                            : (c?.canEscalateToBDO && c?.bdoEscalationTime && currentTime < new Date(c.bdoEscalationTime)
+                               ? 'Escalation available soon...'
+                               : 'Escalate to BDO')}
                         </button>
                       </div>
                     )}

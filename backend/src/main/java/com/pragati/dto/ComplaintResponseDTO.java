@@ -20,6 +20,7 @@ public class ComplaintResponseDTO {
     private Integer escalationLevel;
     private Boolean canEscalateToVibhag;
     private Boolean canEscalateToBDO;
+    private LocalDateTime bdoEscalationTime;
     private LocalDateTime createdAt;
     private String userFullName;
     private String blockchainTxnId;

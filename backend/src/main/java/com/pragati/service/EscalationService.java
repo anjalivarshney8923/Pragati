@@ -2,6 +2,7 @@ package com.pragati.service;
 
 import com.pragati.entity.Complaint;
 import com.pragati.entity.Notification;
+import com.pragati.entity.NotificationType;
 import com.pragati.repository.ComplaintRepository;
 import com.pragati.repository.NotificationRepository;
 import lombok.RequiredArgsConstructor;
@@ -64,7 +65,7 @@ public class EscalationService {
                 .relatedComplaintId(complaintId)
                 .title(title)
                 .message(message)
-                .type("ESCALATION")
+                .type(NotificationType.ESCALATION)
                 .build());
     }
 }

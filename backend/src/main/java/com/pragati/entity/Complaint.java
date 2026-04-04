@@ -64,6 +64,12 @@ public class Complaint {
     @Builder.Default
     private Integer escalationLevel = 0;
 
+    @Column(name = "escalation_time")
+    private LocalDateTime escalationTime;
+
+    @Column(name = "bdo_escalation_time")
+    private LocalDateTime bdoEscalationTime;
+
     @Builder.Default
     private Integer supportCount = 0;
 

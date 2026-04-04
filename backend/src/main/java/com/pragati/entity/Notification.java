@@ -27,9 +27,10 @@ public class Notification {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String message;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
-    private String type = "ESCALATION";
+    private NotificationType type = NotificationType.ESCALATION;
 
     private Long relatedComplaintId;
 
