@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 @Builder
 public class ComplaintResponseDTO {
     private Long id;
+    private String complaintToken;
     private String title;
     private String description;
     private String category;
@@ -16,6 +17,9 @@ public class ComplaintResponseDTO {
     private Double longitude;
     private String imageUrl;
     private String status;
+    private Integer escalationLevel;
+    private Boolean canEscalateToVibhag;
+    private Boolean canEscalateToBDO;
     private LocalDateTime createdAt;
     private String userFullName;
     private String blockchainTxnId;

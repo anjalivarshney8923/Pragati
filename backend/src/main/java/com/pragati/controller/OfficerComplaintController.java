@@ -130,8 +130,8 @@ public class OfficerComplaintController {
                     HttpStatus.FORBIDDEN
                 );
             }
-            // Pass null → no category filter → PRADHAN sees ALL complaints
-            List<ComplaintDTO> complaints = complaintService.getAllComplaintsForOfficer(null);
+            // Pass "PRADHAN" → sees ALL complaints
+            List<ComplaintDTO> complaints = complaintService.getAllComplaintsForOfficer("PRADHAN");
             log.info("Pradhan complaints: {} records returned", complaints.size());
             Map<String, Object> response = new HashMap<>();
             response.put("complaints", complaints);

@@ -11,4 +11,5 @@ import java.util.List;
 public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
     List<Complaint> findByUserOrderByCreatedAtDesc(User user);
     List<Complaint> findAllByOrderByCreatedAtDesc();
+    boolean existsByComplaintToken(String complaintToken);
 }

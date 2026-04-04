@@ -185,7 +185,14 @@ const Complaints = () => {
               ) : (
                 filteredComplaints.map((item) => (
                   <tr key={item.id} className="group/row hover:bg-slate-50/80 transition-all">
-                    <td className="p-6 font-extrabold text-xs text-blue-900">#{item.id}</td>
+                    <td className="p-6 font-extrabold text-xs text-blue-900">
+                      <div className="flex flex-col gap-1">
+                        <span>#{item.id}</span>
+                        {item.complaintToken && (
+                          <span className="text-[9px] font-black text-slate-400 tracking-wider">{item.complaintToken}</span>
+                        )}
+                      </div>
+                    </td>
                     <td className="p-6">
                        <div className="flex flex-col">
                           <span className="text-sm font-bold text-slate-800 tracking-tight">{item.title}</span>

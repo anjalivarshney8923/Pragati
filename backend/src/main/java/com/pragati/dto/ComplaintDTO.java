@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class ComplaintDTO {
     private Long id;
+    private String complaintToken;
     private String title;
     private String description;
     private String category;
@@ -21,4 +22,6 @@ public class ComplaintDTO {
     private LocalDateTime createdAt;
     private String blockchainTxnId;
     private long supportCount;
+    private Integer escalationLevel;
+    private String escalatedToDepartment;
 }

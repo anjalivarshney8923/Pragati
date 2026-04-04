@@ -4,19 +4,15 @@ import com.pragati.dto.ComplaintRequestDTO;
 import com.pragati.dto.ComplaintResponseDTO;
 import com.pragati.dto.ComplaintDTO;
 import com.pragati.dto.NearbyComplaintDTO;
-import com.pragati.entity.Complaint;
-import com.pragati.entity.ComplaintStatus;
-import com.pragati.entity.ComplaintSupport;
-import com.pragati.entity.User;
-import com.pragati.repository.ComplaintRepository;
-import com.pragati.repository.ComplaintSupportRepository;
-import com.pragati.repository.UserRepository;
+import com.pragati.entity.*;
+import com.pragati.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.Year;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -30,6 +26,10 @@ public class ComplaintService {
     private final FileStorageService fileStorageService;
     private final BlockchainService blockchainService;
     private final ComplaintSupportRepository supportRepository;
+    private final DepartmentComplaintRepository departmentComplaintRepository;
+    private final BDOComplaintRepository bdoComplaintRepository;
+    private final NotificationRepository notificationRepository;
+    private final EscalationService escalationService;
 
     // ─── CREATE COMPLAINT ────────────────────────────────────────────────────────
 
@@ -45,6 +45,7 @@ public class ComplaintService {
         }
 
         String txnId = blockchainService.getBlockchainTxnId(request.getDescription());
+        String token = generateUniqueToken();
 
         Complaint complaint = Complaint.builder()
                 .title(request.getTitle())
@@ -56,10 +57,114 @@ public class ComplaintService {
                 .imageUrl(imageUrl)
                 .user(user)
                 .blockchainTxnId(txnId)
+                .complaintToken(token)
                 .build();
 
         Complaint saved = complaintRepository.save(complaint);
+        escalationService.scheduleEscalation(saved.getId(), user.getId(), token);
         return mapToDTO(saved, user.getId());
+    }
+
+    private String generateUniqueToken() {
+        String token;
+        do {
+            int digits = 100000 + new Random().nextInt(900000);
+            token = "CMP-" + Year.now().getValue() + "-" + digits;
+        } while (complaintRepository.existsByComplaintToken(token));
+        return token;
+    }
+
+    // ─── ESCALATE TO VIBHAG ───────────────────────────────────────────────────────
+
+    @Transactional
+    public ComplaintResponseDTO escalateToVibhag(Long complaintId, String mobileNumber) {
+        User user = userRepository.findByMobileNumber(mobileNumber)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        Complaint complaint = complaintRepository.findById(complaintId)
+                .orElseThrow(() -> new RuntimeException("Complaint not found"));
+
+        if (!complaint.getUser().getId().equals(user.getId()))
+            throw new RuntimeException("Unauthorized");
+        if (complaint.getEscalationLevel() < 1)
+            throw new RuntimeException("Escalation to Vibhag not yet available");
+        if (departmentComplaintRepository.existsByComplaintId(complaintId))
+            throw new RuntimeException("Already escalated to Vibhag");
+
+        String dept = mapCategoryToDepartment(complaint.getCategory());
+        departmentComplaintRepository.save(DepartmentComplaint.builder()
+                .complaint(complaint)
+                .departmentName(dept)
+                .build());
+
+        complaint.setStatus(ComplaintStatus.IN_PROGRESS);
+        complaintRepository.save(complaint);
+
+        notificationRepository.save(Notification.builder()
+                .userId(user.getId())
+                .relatedComplaintId(complaintId)
+                .title("Escalated to " + dept)
+                .message("Your complaint (" + complaint.getComplaintToken() + ") has been escalated to " + dept + ".")
+                .type("ESCALATION")
+                .build());
+
+        return mapToDTO(complaint, user.getId());
+    }
+
+    // ─── ESCALATE TO BDO ──────────────────────────────────────────────────────────
+
+    @Transactional
+    public ComplaintResponseDTO escalateToBDO(Long complaintId, String mobileNumber) {
+        User user = userRepository.findByMobileNumber(mobileNumber)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        Complaint complaint = complaintRepository.findById(complaintId)
+                .orElseThrow(() -> new RuntimeException("Complaint not found"));
+
+        if (!complaint.getUser().getId().equals(user.getId()))
+            throw new RuntimeException("Unauthorized");
+        if (complaint.getEscalationLevel() < 2)
+            throw new RuntimeException("Escalation to BDO not yet available");
+        if (bdoComplaintRepository.existsByComplaintId(complaintId))
+            throw new RuntimeException("Already escalated to BDO");
+
+        bdoComplaintRepository.save(BDOComplaint.builder()
+                .complaint(complaint)
+                .blockName(complaint.getLocation())
+                .build());
+
+        complaint.setStatus(ComplaintStatus.IN_PROGRESS);
+        complaintRepository.save(complaint);
+
+        notificationRepository.save(Notification.builder()
+                .userId(user.getId())
+                .relatedComplaintId(complaintId)
+                .title("Escalated to BDO")
+                .message("Your complaint (" + complaint.getComplaintToken() + ") has been escalated to the Block Development Officer (BDO).")
+                .type("ESCALATION")
+                .build());
+
+        return mapToDTO(complaint, user.getId());
+    }
+
+    // ─── GET COMPLAINT BY ID ──────────────────────────────────────────────────────
+
+    @Transactional(readOnly = true)
+    public ComplaintResponseDTO getComplaintById(Long id, String mobileNumber) {
+        User user = userRepository.findByMobileNumber(mobileNumber)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        Complaint complaint = complaintRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Complaint not found"));
+        return mapToDTO(complaint, user.getId());
+    }
+
+    private String mapCategoryToDepartment(String category) {
+        if (category == null) return "Samanya Vibhag";
+        return switch (category.toUpperCase()) {
+            case "ELECTRICITY", "POWER", "STREETLIGHT" -> "Bijli Vibhag";
+            case "WATER", "WATER_SUPPLY", "DRINKING_WATER" -> "Jal Vibhag";
+            case "ROAD", "ROADS", "POTHOLE", "TRANSPORT" -> "PWD";
+            case "SANITATION", "GARBAGE", "WASTE" -> "Swachhta Vibhag";
+            default -> "Samanya Vibhag";
+        };
     }
 
     // ─── SUPPORT COMPLAINT ───────────────────────────────────────────────────────
@@ -205,23 +310,54 @@ public class ComplaintService {
 
     @Transactional(readOnly = true)
     public List<ComplaintDTO> getAllComplaintsForOfficer() {
-        return getAllComplaintsForOfficer(null); // fallback: no filter
+        return getAllComplaintsForOfficer(null);
     }
 
     @Transactional(readOnly = true)
     public List<ComplaintDTO> getAllComplaintsForOfficer(String officerDepartment) {
-        return complaintRepository.findAllByOrderByCreatedAtDesc().stream()
-                .filter(c -> categoryMatchesDepartment(c.getCategory(), officerDepartment))
-                .map(this::mapToOfficerDTO)
-                // Sort: supportCount DESC, then createdAt DESC
-                .sorted((a, b) -> {
-                    int sc = Long.compare(b.getSupportCount(), a.getSupportCount());
-                    if (sc != 0) return sc;
-                    if (a.getCreatedAt() != null && b.getCreatedAt() != null)
-                        return b.getCreatedAt().compareTo(a.getCreatedAt());
-                    return 0;
+        // BDO: only show complaints escalated to BDO
+        if (officerDepartment == null || officerDepartment.equalsIgnoreCase("BDO")) {
+            return bdoComplaintRepository.findAll().stream()
+                    .map(bc -> {
+                        ComplaintDTO dto = mapToOfficerDTO(bc.getComplaint());
+                        dto.setEscalatedToDepartment("BDO");
+                        return dto;
+                    })
+                    .sorted((a, b) -> Long.compare(b.getSupportCount(), a.getSupportCount()))
+                    .collect(Collectors.toList());
+        }
+
+        // PRADHAN: sees all complaints
+        if (officerDepartment.equalsIgnoreCase("PRADHAN")) {
+            return complaintRepository.findAllByOrderByCreatedAtDesc().stream()
+                    .map(this::mapToOfficerDTO)
+                    .sorted((a, b) -> Long.compare(b.getSupportCount(), a.getSupportCount()))
+                    .collect(Collectors.toList());
+        }
+
+        // Vibhag officers: only show complaints escalated to their department
+        String mappedDeptName = mapOfficerDeptToVibhagName(officerDepartment);
+        return departmentComplaintRepository.findByDepartmentNameIgnoreCase(mappedDeptName).stream()
+                .map(dc -> {
+                    ComplaintDTO dto = mapToOfficerDTO(dc.getComplaint());
+                    dto.setEscalatedToDepartment(dc.getDepartmentName());
+                    return dto;
                 })
+                .sorted((a, b) -> Long.compare(b.getSupportCount(), a.getSupportCount()))
                 .collect(Collectors.toList());
+    }
+
+    // Maps officer's department key (stored in DB) → Vibhag display name used in department_complaints
+    private String mapOfficerDeptToVibhagName(String dept) {
+        if (dept == null) return "Samanya Vibhag";
+        return switch (dept.toUpperCase()) {
+            case "ELECTRICITY" -> "Bijli Vibhag";
+            case "JAL_VIBHAG"  -> "Jal Vibhag";
+            case "ROAD"        -> "PWD";
+            case "SWACHHTA"    -> "Swachhta Vibhag";
+            case "NAGAR_NIGAM" -> "Samanya Vibhag";
+            default            -> dept;
+        };
     }
 
     // ─── OFFICER STATS ────────────────────────────────────────────────────────────
@@ -251,8 +387,12 @@ public class ComplaintService {
                 && supportRepository.existsByComplaintIdAndUserId(c.getId(), currentUserId);
         long count = supportRepository.countByComplaintId(c.getId());
 
+        int level = c.getEscalationLevel() != null ? c.getEscalationLevel() : 0;
+        boolean alreadyEscalatedToVibhag = departmentComplaintRepository.existsByComplaintId(c.getId());
+        boolean alreadyEscalatedToBDO = bdoComplaintRepository.existsByComplaintId(c.getId());
         return ComplaintResponseDTO.builder()
                 .id(c.getId())
+                .complaintToken(c.getComplaintToken())
                 .title(c.getTitle() != null ? c.getTitle() : "No Title")
                 .description(c.getDescription() != null ? c.getDescription() : "No Description")
                 .category(c.getCategory() != null ? c.getCategory() : "GENERAL")
@@ -261,6 +401,9 @@ public class ComplaintService {
                 .longitude(c.getLongitude())
                 .imageUrl(c.getImageUrl())
                 .status(c.getStatus() != null ? c.getStatus().name() : "PENDING")
+                .escalationLevel(level)
+                .canEscalateToVibhag(level >= 1 && !alreadyEscalatedToVibhag)
+                .canEscalateToBDO(level >= 2 && alreadyEscalatedToVibhag && !alreadyEscalatedToBDO)
                 .createdAt(c.getCreatedAt())
                 .userFullName(userFullName)
                 .blockchainTxnId(c.getBlockchainTxnId())
@@ -276,11 +419,13 @@ public class ComplaintService {
         long count = supportRepository.countByComplaintId(c.getId());
         return ComplaintDTO.builder()
                 .id(c.getId())
+                .complaintToken(c.getComplaintToken())
                 .title(c.getTitle() != null ? c.getTitle() : "No Title")
                 .description(c.getDescription() != null ? c.getDescription() : "No Description")
                 .category(c.getCategory() != null ? c.getCategory() : "GENERAL")
                 .location(c.getLocation() != null ? c.getLocation() : "Unknown")
                 .status(c.getStatus() != null ? c.getStatus().name() : "PENDING")
+                .escalationLevel(c.getEscalationLevel() != null ? c.getEscalationLevel() : 0)
                 .createdAt(c.getCreatedAt())
                 .attachmentPath(attachmentUrl)
                 .blockchainTxnId(c.getBlockchainTxnId())

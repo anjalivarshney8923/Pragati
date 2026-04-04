@@ -58,6 +58,36 @@ public class ComplaintController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/{id}/escalate/vibhag")
+    public ResponseEntity<?> escalateToVibhag(@PathVariable Long id) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        try {
+            return ResponseEntity.ok(complaintService.escalateToVibhag(id, username));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/{id}/escalate/bdo")
+    public ResponseEntity<?> escalateToBDO(@PathVariable Long id) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        try {
+            return ResponseEntity.ok(complaintService.escalateToBDO(id, username));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getComplaintById(@PathVariable Long id) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        try {
+            return ResponseEntity.ok(complaintService.getComplaintById(id, username));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
     @PostMapping("/{id}/support")
     public ResponseEntity<?> supportComplaint(@PathVariable Long id) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();

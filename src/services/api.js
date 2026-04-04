@@ -106,6 +106,18 @@ export const complaintService = {
   supportComplaint: async (id) => {
     const response = await api.post(`/complaints/${id}/support`);
     return response.data;
+  },
+  getComplaintById: async (id) => {
+    const response = await api.get(`/complaints/${id}`);
+    return response.data;
+  },
+  escalateToVibhag: async (id) => {
+    const response = await api.post(`/complaints/${id}/escalate/vibhag`);
+    return response.data;
+  },
+  escalateToBDO: async (id) => {
+    const response = await api.post(`/complaints/${id}/escalate/bdo`);
+    return response.data;
   }
 };
 

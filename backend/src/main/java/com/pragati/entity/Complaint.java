@@ -58,6 +58,12 @@ public class Complaint {
     @Column(name = "blockchain_txn_id")
     private String blockchainTxnId;
 
+    @Column(unique = true)
+    private String complaintToken;
+
+    @Builder.Default
+    private Integer escalationLevel = 0;
+
     @Builder.Default
     private Integer supportCount = 0;
 

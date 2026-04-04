@@ -1,6 +1,6 @@
-import React, { useState, useEffect, Component } from 'react';
+import React, { useState, useEffect, useRef, Component } from 'react';
 import { complaintService } from '../../services/api';
-import { CheckCircle, Clock, AlertCircle, MapPin, Navigation, ThumbsUp, Repeat, User as UserIcon } from 'lucide-react';
+import { CheckCircle, Clock, AlertCircle, MapPin, Navigation, ThumbsUp, Repeat, User as UserIcon, ArrowUpCircle } from 'lucide-react';
 import Loader from '../../components/Loader';
 
 // Simple Error Boundary for the component
@@ -29,10 +29,12 @@ class ErrorBoundary extends Component {
 const MyComplaintsContent = () => {
   const [complaints, setComplaints] = useState([]);
   const [nearbyComplaints, setNearbyComplaints] = useState([]);
-  const [activeTab, setActiveTab] = useState('my'); // 'my' or 'nearby'
+  const [activeTab, setActiveTab] = useState('my');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [supportingIds, setSupportingIds] = useState(new Set());
+  const [escalatingIds, setEscalatingIds] = useState(new Set());
+  const pollingRef = useRef({});
 
   useEffect(() => {
     if (activeTab === 'my') {
@@ -40,13 +42,30 @@ const MyComplaintsContent = () => {
     } else {
       fetchNearbyComplaints();
     }
+    return () => Object.values(pollingRef.current).forEach(clearInterval);
   }, [activeTab]);
+
+  const startPolling = (complaintId) => {
+    if (pollingRef.current[complaintId]) return;
+    pollingRef.current[complaintId] = setInterval(async () => {
+      try {
+        const updated = await complaintService.getComplaintById(complaintId);
+        setComplaints(prev => prev.map(c => c.id === complaintId ? { ...c, ...updated } : c));
+        if (updated.escalationLevel >= 2) {
+          clearInterval(pollingRef.current[complaintId]);
+          delete pollingRef.current[complaintId];
+        }
+      } catch (e) { /* ignore */ }
+    }, 3000);
+  };
 
   const fetchMyComplaints = async () => {
     setIsLoading(true);
     try {
       const data = await complaintService.getMyComplaints();
-      setComplaints(Array.isArray(data) ? data : []);
+      const arr = Array.isArray(data) ? data : [];
+      setComplaints(arr);
+      arr.forEach(c => { if (c.escalationLevel < 2) startPolling(c.id); });
     } catch (err) {
       handleApiError(err);
     } finally {
@@ -81,6 +100,21 @@ const MyComplaintsContent = () => {
         setIsLoading(false);
       }
     );
+  };
+
+  const handleEscalate = async (id, type) => {
+    if (escalatingIds.has(`${id}-${type}`)) return;
+    setEscalatingIds(prev => new Set(prev).add(`${id}-${type}`));
+    try {
+      const updated = type === 'vibhag'
+        ? await complaintService.escalateToVibhag(id)
+        : await complaintService.escalateToBDO(id);
+      setComplaints(prev => prev.map(c => c.id === id ? { ...c, ...updated } : c));
+    } catch (err) {
+      alert(err?.response?.data?.error || `Failed to escalate to ${type}`);
+    } finally {
+      setEscalatingIds(prev => { const n = new Set(prev); n.delete(`${id}-${type}`); return n; });
+    }
   };
 
   const handleSupport = async (id) => {
@@ -203,6 +237,11 @@ const MyComplaintsContent = () => {
                         <span className="bg-blue-50 text-blue-700 text-[10px] font-black px-2.5 py-1 rounded-md uppercase tracking-wider">
                           # {c?.category?.toUpperCase() || "GENERAL"}
                         </span>
+                        {c?.complaintToken && (
+                          <span className="bg-slate-100 text-slate-500 text-[10px] font-black px-2.5 py-1 rounded-md tracking-wider">
+                            {c.complaintToken}
+                          </span>
+                        )}
                         {getStatusBadge(c?.status)}
                         {activeTab === 'nearby' && (
                           <span className="flex items-center text-[10px] font-black text-[#1E3A8A] bg-blue-50 px-2.5 py-1 rounded-md uppercase border border-blue-100 tracking-tighter">
@@ -245,6 +284,37 @@ const MyComplaintsContent = () => {
                         </a>
                       )}
                     </div>
+
+                    {activeTab === 'my' && (
+                      <div className="flex gap-2 flex-wrap">
+                        <button
+                          onClick={() => handleEscalate(c?.id, 'vibhag')}
+                          disabled={!c?.canEscalateToVibhag || escalatingIds.has(`${c?.id}-vibhag`)}
+                          title={!c?.canEscalateToVibhag ? 'Available after 5 seconds' : 'Escalate to Vibhag'}
+                          className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${
+                            c?.canEscalateToVibhag
+                              ? 'bg-orange-500 text-white border-orange-600 hover:bg-orange-600 shadow active:scale-95'
+                              : 'bg-slate-100 text-slate-300 border-slate-200 cursor-not-allowed'
+                          }`}
+                        >
+                          <ArrowUpCircle size={13} />
+                          {escalatingIds.has(`${c?.id}-vibhag`) ? 'Escalating...' : 'Escalate to Vibhag'}
+                        </button>
+                        <button
+                          onClick={() => handleEscalate(c?.id, 'bdo')}
+                          disabled={!c?.canEscalateToBDO || escalatingIds.has(`${c?.id}-bdo`)}
+                          title={!c?.canEscalateToBDO ? 'Available after 10 seconds' : 'Escalate to BDO'}
+                          className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${
+                            c?.canEscalateToBDO
+                              ? 'bg-red-600 text-white border-red-700 hover:bg-red-700 shadow active:scale-95'
+                              : 'bg-slate-100 text-slate-300 border-slate-200 cursor-not-allowed'
+                          }`}
+                        >
+                          <ArrowUpCircle size={13} />
+                          {escalatingIds.has(`${c?.id}-bdo`) ? 'Escalating...' : 'Escalate to BDO'}
+                        </button>
+                      </div>
+                    )}
 
                     {activeTab === 'nearby' && (
                       <button

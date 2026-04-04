@@ -26,3 +26,9 @@ jwt:
 server:
   port: 8080
 
+escalation:
+  level1:
+    delay-ms: 5000
+  level2:
+    delay-ms: 10000
+
