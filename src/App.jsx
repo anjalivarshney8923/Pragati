@@ -17,6 +17,7 @@ import GovernmentSchemes from './pages/dashboard/GovernmentSchemes';
 import Expenditure from './pages/dashboard/Expenditure';
 import RecentPosts from './pages/dashboard/RecentPosts';
 import MyRights from './pages/dashboard/MyRights';
+import Notifications from './pages/dashboard/Notifications';
 
 // Governance Dashboard Components
 import GovernanceLayout from './layouts/GovernanceLayout';
@@ -30,6 +31,9 @@ import NotificationsBoard from './pages/governance/Notifications';
 import Settings from './pages/governance/Settings';
 import CreatePost from './pages/governance/CreatePost';
 import MyPosts from './pages/governance/MyPosts';
+
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 // Placeholders for undefined pages
 const Placeholder = ({ title }) => (
@@ -45,6 +49,7 @@ function App() {
   return (
     <Router>
       <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
+        <ToastContainer position="top-right" autoClose={3000} hideProgressBar theme="colored" />
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
@@ -61,7 +66,7 @@ function App() {
             <Route path="/dashboard/expenditure" element={<Expenditure />} />
             <Route path="/dashboard/schemes" element={<GovernmentSchemes />} />
             <Route path="/dashboard/posts" element={<RecentPosts />} />
-            <Route path="/dashboard/notifications" element={<Placeholder title="Notifications" />} />
+            <Route path="/dashboard/notifications" element={<Notifications />} />
             <Route path="/dashboard/support" element={<Placeholder title="Help & Support" />} />
           </Route>
 

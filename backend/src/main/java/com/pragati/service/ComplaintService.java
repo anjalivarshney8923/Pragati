@@ -30,6 +30,7 @@ public class ComplaintService {
     private final BDOComplaintRepository bdoComplaintRepository;
     private final NotificationRepository notificationRepository;
     private final EscalationService escalationService;
+    private final EmailService emailService;
 
     // ─── CREATE COMPLAINT ────────────────────────────────────────────────────────
 
@@ -62,6 +63,19 @@ public class ComplaintService {
 
         Complaint saved = complaintRepository.save(complaint);
         escalationService.scheduleEscalation(saved.getId(), user.getId(), token);
+        
+        // Save Dashboard Notification
+        notificationRepository.save(Notification.builder()
+                .userId(user.getId())
+                .relatedComplaintId(saved.getId())
+                .title("Complaint Successfully Submitted")
+                .message("Your complaint regarding '" + saved.getTitle() + "' was received successfully. Token: " + saved.getComplaintToken())
+                .type(NotificationType.SYSTEM)
+                .build());
+                
+        // Trigger Async Email Notification
+        emailService.sendComplaintCreatedEmail(user, saved);
+        
         return mapToDTO(saved, user.getId());
     }
 
@@ -280,8 +294,22 @@ public class ComplaintService {
         Complaint complaint = complaintRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Complaint not found"));
         try {
-            complaint.setStatus(ComplaintStatus.valueOf(status.toUpperCase()));
-            complaintRepository.save(complaint);
+            ComplaintStatus newStatus = ComplaintStatus.valueOf(status.toUpperCase());
+            complaint.setStatus(newStatus);
+            Complaint saved = complaintRepository.save(complaint);
+            
+            // Notification
+            notificationRepository.save(Notification.builder()
+                    .userId(saved.getUser().getId())
+                    .relatedComplaintId(saved.getId())
+                    .title("Complaint Status Updated")
+                    .message("The status of your complaint ('" + saved.getTitle() + "') has been updated to: " + newStatus)
+                    .type(NotificationType.UPDATE)
+                    .build());
+                    
+            // Email
+            emailService.sendComplaintUpdatedEmail(saved.getUser(), saved, "Your complaint status has been modified by an official.");
+            
         } catch (IllegalArgumentException e) {
             throw new RuntimeException("Invalid status: " + status);
         }
