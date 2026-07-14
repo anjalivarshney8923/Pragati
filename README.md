@@ -1,23 +1,82 @@
-# Pragati - Digital Village Portal
+# Pragati - Digital Village Governance Platform
 
-A comprehensive digital governance platform for rural citizens, featuring villager registration, complaint management, and fund tracking.
+Pragati is a digital governance platform designed to bring transparency, accountability, and citizen participation into rural administration. It empowers villagers by providing real-time access to government schemes, fund allocation details, development projects, and grievance management services through a user-friendly digital portal.
 
-## Features
+---
 
-- Villager registration and authentication
-- Complaint filing and tracking
-- Village funds visualization (receipts vs payments)
-- Multi-language support (English/Hindi)
-- Face verification for secure access
+## 🌟 Features
 
-## Tech Stack
+### 👤 Citizen Registration & Authentication
+- Secure villager registration and login
+- Profile management
+- Role-based access
 
-- **Frontend**: React + Vite, Tailwind CSS, Recharts
-- **Backend**: Java Spring Boot
-- **AI Service**: Python Flask (face recognition, data processing)
-- **Database**: (Add your database details)
+### 📝 Complaint Management System
+- File complaints digitally
+- Track complaint status in real time
+- Transparent grievance redressal process
 
-## Getting Started
+### 💰 Village Fund Monitoring
+- View government fund allocation
+- Track expenditure and utilization
+- Interactive charts and visual reports
+
+### 🤖 AI-Powered Assistance
+- Face verification for secure user access
+- Intelligent data processing
+- Citizen support features
+
+### 🌐 Multi-Language Support
+- English Interface
+- Hindi Interface
+- Improved accessibility for rural users
+
+### 📊 Data Visualization
+- Graphical representation of village funds
+- Development project monitoring
+- Analytical dashboards
+
+---
+
+## 🛠 Tech Stack
+
+### Frontend
+- React.js
+- Vite
+- Tailwind CSS
+- Recharts
+
+### Backend
+- Java Spring Boot
+
+### AI Service
+- Python Flask
+- Face Recognition
+- Data Processing Modules
+
+### Database
+- MySQL (or any preferred relational database)
+
+---
+
+## 📂 Project Structure
+
+```text
+Pragati/
+│
+├── src/                    # React Frontend
+├── public/                 # Static Assets
+├── backend/                # Spring Boot Backend
+├── ai-service/             # Python Flask AI Services
+├── dataset/                # Sample Datasets
+├── dataset2/               # Additional Datasets
+├── package.json
+└── README.md
+```
+
+---
+
+## 🚀 Installation
 
 ### Prerequisites
 
@@ -26,80 +85,102 @@ A comprehensive digital governance platform for rural citizens, featuring villag
 - Python (v3.8+)
 - pip
 
-### Installation
+### Clone Repository
 
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd pragati
-   ```
-
-2. **Install Frontend Dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Install AI Service Dependencies**
-   ```bash
-   cd ai-service
-   pip install -r requirements.txt
-   cd ..
-   ```
-
-4. **Install Backend Dependencies**
-   ```bash
-   cd backend
-   # Add your Java build commands (e.g., mvn install)
-   cd ..
-   ```
-
-### Running the Application
-
-1. **Start the AI Service** (in one terminal)
-   ```bash
-   cd ai-service
-   python app.py
-   ```
-   This starts the Flask server on http://localhost:5000
-
-2. **Start the Backend** (in another terminal)
-   ```bash
-   cd backend
-   # Add your Java run command (e.g., mvn spring-boot:run)
-   ```
-
-3. **Start the Frontend** (in another terminal)
-   ```bash
-   npm run dev
-   ```
-   This starts the React app on http://localhost:5173
-
-### Accessing the Application
-
-- Open http://localhost:5173 in your browser
-- The AI service runs on http://localhost:5000
-- Backend API endpoints (add details)
-
-## Project Structure
-
-```
-pragati/
-├── src/                    # React frontend
-├── ai-service/            # Python Flask AI service
-├── backend/               # Java Spring Boot backend
-├── dataset/               # Village funds data
-├── public/                # Static assets
-└── package.json
+```bash
+git clone https://github.com/anjalivarshney8923/Pragati.git
+cd Pragati
 ```
 
-## Contributing
+### Install Frontend Dependencies
+
+```bash
+npm install
+```
+
+### Install AI Service Dependencies
+
+```bash
+cd ai-service
+pip install -r requirements.txt
+cd ..
+```
+
+### Install Backend Dependencies
+
+```bash
+cd backend
+# Run Maven/Gradle build commands
+cd ..
+```
+
+---
+
+## ▶ Running the Application
+
+### Start AI Service
+
+```bash
+cd ai-service
+python app.py
+```
+
+### Start Backend
+
+```bash
+cd backend
+# Example:
+mvn spring-boot:run
+```
+
+### Start Frontend
+
+```bash
+npm run dev
+```
+
+---
+
+## 🎯 Use Cases
+
+- Rural Governance Digitization
+- Citizen Grievance Management
+- Government Fund Transparency
+- Village Development Monitoring
+- Public Service Accessibility
+- Smart Village Initiatives
+
+---
+
+## 📈 Future Enhancements
+
+- Mobile Application Support
+- SMS Notifications
+- Government Scheme Recommendation System
+- AI Chatbot for Citizen Assistance
+- Advanced Analytics Dashboard
+- Geo-Tagged Development Projects
+
+---
+
+## 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch
 3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
+4. Push to your branch
+5. Open a Pull Request
 
-## License
+---
 
-(Add your license information)
+## 📜 License
+
+This project is developed for educational and social impact purposes. Add an appropriate open-source license before production deployment.
+
+---
+
+## 👩‍💻 Author
+
+**Anjali Varshney**
+
+Pragati aims to bridge the gap between citizens and local administration by providing a transparent, accessible, and technology-driven governance platform for rural communities.
