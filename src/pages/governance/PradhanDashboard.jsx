@@ -20,7 +20,6 @@ import { complaintService, workProofService } from '../../services/api';
 import Loader from '../../components/Loader';
 import WorkProofModal from '../../components/governance/WorkProofModal';
 
-const ALGORAND_EXPLORER = 'https://testnet.algoscan.app/tx/';
 
 // ─── PradhanDashboard: Identical UI to Complaints.jsx, fixed with Work Proof logic ─────
 const PradhanDashboard = () => {
@@ -31,8 +30,7 @@ const PradhanDashboard = () => {
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [updatingId, setUpdatingId] = useState(null);
   const [selectedForProof, setSelectedForProof] = useState(null);
-  const [verificationResults, setVerificationResults] = useState({});
-  const [verifyingId, setVerifyingId] = useState(null);
+
 
   // Officer info from localStorage
   const officerData = (() => {
@@ -71,18 +69,6 @@ const PradhanDashboard = () => {
     }
   };
 
-  const handleVerifyProof = async (item) => {
-    try {
-      setVerifyingId(item.id);
-      const result = await complaintService.verifyComplaintIntegrity(item.id);
-      setVerificationResults(prev => ({ ...prev, [item.id]: result.verified }));
-    } catch (err) {
-      console.error('Verification failed:', err);
-      alert('Verification failed: ' + (err.response?.data?.message || err.message));
-    } finally {
-      setVerifyingId(null);
-    }
-  };
 
   const filteredComplaints = complaints.filter(c => {
     const q = searchTerm.toLowerCase();
@@ -215,7 +201,6 @@ const PradhanDashboard = () => {
                   <th className="p-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Community Support</th>
                   <th className="p-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Status Control</th>
                   <th className="p-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Received</th>
-                  <th className="p-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Blockchain Proof</th>
                 </tr>
               </thead>
               <tbody>
@@ -285,7 +270,7 @@ const PradhanDashboard = () => {
                               </button>
                             ))}
                           </div>
-                          {item.status === 'RESOLVED' && !item.blockchainTxnId && (
+                          {item.status === 'RESOLVED' && (
                             <button
                               onClick={() => setSelectedForProof(item)}
                               className="mt-1 flex items-center justify-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white rounded-xl text-[9px] font-black uppercase hover:bg-indigo-700 transition-all shadow-sm"
@@ -300,44 +285,6 @@ const PradhanDashboard = () => {
                         <span className="text-xs font-bold text-slate-600">
                           {item.createdAt ? new Date(item.createdAt).toLocaleDateString('en-IN') : '—'}
                         </span>
-                      </td>
-
-                      <td className="p-6">
-                        {item.blockchainTxnId ? (
-                             <div className="flex flex-col gap-1.5">
-                               <a
-                                href={`${ALGORAND_EXPLORER}${item.blockchainTxnId}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-xl text-[9px] font-black uppercase hover:bg-indigo-700 hover:text-white transition-all shadow-sm"
-                              >
-                                <ExternalLink className="w-3 h-3" />
-                                Txn
-                              </a>
-                              
-                              <button
-                                onClick={() => handleVerifyProof(item)}
-                                disabled={verifyingId === item.id}
-                                className={`flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-[9px] font-black uppercase transition-all ${
-                                  verificationResults[item.id] === true ? 'bg-green-100 text-green-700 border border-green-200' :
-                                  verificationResults[item.id] === false ? 'bg-red-100 text-red-700 border border-red-200' :
-                                  'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
-                                } shadow-sm`}
-                              >
-                                {verifyingId === item.id ? (
-                                  <Loader variant="blue" size="small" />
-                                ) : verificationResults[item.id] === true ? (
-                                  <><Shield className="w-3 h-3" /> Verified</>
-                                ) : verificationResults[item.id] === false ? (
-                                  <><AlertCircle className="w-3 h-3" /> Tampered</>
-                                ) : (
-                                  <><BadgeCheck className="w-3 h-3" /> Verify</>
-                                )}
-                              </button>
-                             </div>
-                          ) : (
-                            <span className="text-[9px] text-slate-300 font-bold uppercase">No Proof</span>
-                          )}
                       </td>
                     </tr>
                   );
@@ -356,7 +303,7 @@ const PradhanDashboard = () => {
         )}
 
         <div className="p-6 border-t border-gray-100 flex justify-between items-center text-[10px] font-black text-slate-400 uppercase tracking-widest">
-          <span>Source: PostgreSQL · Blockchain Verified resolution flow</span>
+          <span>Source: PostgreSQL Grievance System</span>
         </div>
       </div>
     </div>

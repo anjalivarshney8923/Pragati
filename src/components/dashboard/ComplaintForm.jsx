@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { CheckCircle2, Navigation, Trash2, AlertCircle } from 'lucide-react';
-import { complaintService } from '../../services/api';
+import { complaintService, geoService } from '../../services/api';
 import InputField from '../ui/InputField';
 import TextArea from '../ui/TextArea';
 import SelectDropdown from '../ui/SelectDropdown';
@@ -25,6 +25,9 @@ const ComplaintForm = () => {
   const [isFetchingLocation, setIsFetchingLocation] = useState(false);
   const [locationSuccess, setLocationSuccess] = useState(false);
   const [locationError, setLocationError] = useState('');
+  const [showManualLocation, setShowManualLocation] = useState(false);
+  const [manualAddress, setManualAddress] = useState('');
+  const [isGeocoding, setIsGeocoding] = useState(false);
   const navigate = useNavigate();
 
   const categories = [
@@ -51,11 +54,13 @@ const ComplaintForm = () => {
     setCoordinates({ lat: null, lng: null });
     setLocationSuccess(false);
     setLocationError('');
+    setShowManualLocation(false);
+    setManualAddress('');
   };
 
   const handleLocationClick = () => {
     if (!navigator.geolocation) {
-      setLocationError(t('raiseComplaint.locationNotSupported'));
+      setLocationError("Geolocation is not supported by your browser");
       return;
     }
 
@@ -64,32 +69,78 @@ const ComplaintForm = () => {
     setLocationSuccess(false);
 
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
         const { latitude, longitude } = position.coords;
-        const readableLocation = `Lat: ${latitude.toFixed(4)}, Lng: ${longitude.toFixed(4)}`;
-        
         setCoordinates({ lat: latitude, lng: longitude });
-        setFormData(prev => ({ ...prev, location: readableLocation }));
-        setLocationSuccess(true);
-        setIsFetchingLocation(false);
+        
+        try {
+          const response = await geoService.reverseGeocode(latitude, longitude);
+          if (response && response.displayName) {
+            setFormData(prev => ({ ...prev, location: response.displayName }));
+            setLocationSuccess(true);
+          } else {
+            const readableLocation = `Lat: ${latitude.toFixed(4)}, Lng: ${longitude.toFixed(4)}`;
+            setFormData(prev => ({ ...prev, location: readableLocation }));
+            setLocationSuccess(true);
+          }
+        } catch (err) {
+          console.error("Reverse geocoding failed, falling back to coordinates:", err);
+          const readableLocation = `Lat: ${latitude.toFixed(4)}, Lng: ${longitude.toFixed(4)}`;
+          setFormData(prev => ({ ...prev, location: readableLocation }));
+          setLocationSuccess(true);
+        } finally {
+          setIsFetchingLocation(false);
+        }
       },
       (error) => {
         setIsFetchingLocation(false);
+        let msg = "Failed to retrieve location.";
         if (error.code === error.PERMISSION_DENIED) {
-          setLocationError("Please allow location access to submit a complaint.");
-        } else {
-          setLocationError(t('raiseComplaint.locationFetchFailed'));
+          msg = "Location permission denied. Please allow location access or enter address manually.";
+        } else if (error.code === error.POSITION_UNAVAILABLE) {
+          msg = "Location information unavailable. You can enter the address manually.";
+        } else if (error.code === error.TIMEOUT) {
+          msg = "Location retrieval timed out. You can enter the address manually.";
         }
+        setLocationError(msg);
+        setShowManualLocation(true);
       },
-      { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
+  };
+
+  const handleManualAddressSubmit = async () => {
+    if (!manualAddress.trim()) {
+      setLocationError("Please enter a valid address.");
+      return;
+    }
+    
+    setIsGeocoding(true);
+    setLocationError('');
+    setLocationSuccess(false);
+    
+    try {
+      const response = await geoService.geocodeAddress(manualAddress);
+      if (response && response.latitude && response.longitude) {
+        setCoordinates({ lat: response.latitude, lng: response.longitude });
+        setFormData(prev => ({ ...prev, location: response.displayName || manualAddress }));
+        setLocationSuccess(true);
+      } else {
+        setLocationError("Could not resolve address to coordinates. Please try another address.");
+      }
+    } catch (err) {
+      console.error("Geocoding manual address failed:", err);
+      setLocationError("Geocoding service unavailable. Please try again later.");
+    } finally {
+      setIsGeocoding(false);
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!coordinates.lat || !coordinates.lng) {
-      setLocationError("Please capture your current location before submitting.");
+      setLocationError("Please capture your current location or enter an address before submitting.");
       return;
     }
 
@@ -104,8 +155,13 @@ const ComplaintForm = () => {
       payload.append('latitude', coordinates.lat);
       payload.append('longitude', coordinates.lng);
 
-      if (images && images.length > 0 && images[0].file) {
-        payload.append('image', images[0].file);
+      if (images && images.length > 0) {
+        images.forEach(img => {
+          if (img.file) {
+            payload.append('images', img.file);
+          }
+        });
+        payload.append('image', images[0].file); // Backwards compatibility for single field
       }
 
       await complaintService.createComplaint(payload);
@@ -114,7 +170,7 @@ const ComplaintForm = () => {
       setSubmitted(true);
       
       setTimeout(() => {
-        navigate('/my-complaints');
+        navigate('/dashboard/complaints');
       }, 2500);
 
     } catch (error) {
@@ -190,26 +246,62 @@ const ComplaintForm = () => {
 
         <div className="w-full">
           <label className="block text-sm font-semibold text-slate-700 mb-2">
-            Complaint Location (GPS)
+            Complaint Location (GPS or Address)
           </label>
           <div className="flex flex-col gap-3">
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3">
               <Button 
                 type="button" 
-                variant={locationSuccess ? "outline" : "primary"} 
+                variant={locationSuccess && !showManualLocation ? "outline" : "primary"} 
                 onClick={handleLocationClick} 
                 disabled={isFetchingLocation || isLoading} 
-                className={`flex-grow py-3 rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 ${locationSuccess ? 'border-green-500 text-green-700 bg-green-50' : ''}`}
+                className={`flex-grow py-3 rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 ${locationSuccess && !showManualLocation ? 'border-green-500 text-green-700 bg-green-50' : ''}`}
               >
                 <Navigation size={20} className={isFetchingLocation ? 'animate-pulse' : ''} />
-                {isFetchingLocation ? 'Accessing GPS...' : locationSuccess ? 'Location Detected Successfully' : 'Capture My Current Location'}
+                {isFetchingLocation ? 'Accessing GPS...' : locationSuccess && !showManualLocation ? 'Location Detected Successfully' : 'Capture My Current Location'}
+              </Button>
+              
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setShowManualLocation(!showManualLocation);
+                  setLocationError('');
+                }}
+                className="py-3 px-4 rounded-xl text-slate-600 border-slate-200 hover:bg-slate-50"
+              >
+                {showManualLocation ? "Use GPS Detection" : "Enter Address Manually"}
               </Button>
             </div>
+            
+            {showManualLocation && (
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+                <p className="text-xs text-slate-500 font-semibold">Enter your location manually. We will convert it to GPS coordinates for routing.</p>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={manualAddress}
+                    onChange={(e) => setManualAddress(e.target.value)}
+                    placeholder="e.g. Village Pipri, District Sonebhadra, UP"
+                    className="flex-1 px-4 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:border-gov-blue"
+                  />
+                  <Button
+                    type="button"
+                    variant="primary"
+                    disabled={isGeocoding || !manualAddress.trim()}
+                    onClick={handleManualAddressSubmit}
+                    className="px-4 py-2 text-sm"
+                  >
+                    {isGeocoding ? "Converting..." : "Verify Address"}
+                  </Button>
+                </div>
+              </div>
+            )}
             
             {locationSuccess && (
               <div className="flex items-center gap-2 text-green-600 bg-green-50 px-4 py-2 rounded-lg border border-green-200 shadow-sm">
                 <CheckCircle2 size={16} />
-                <span className="text-sm font-bold tracking-tight">Verified Coordinate: {formData.location}</span>
+                <span className="text-sm font-bold tracking-tight">Verified Location: {formData.location}</span>
               </div>
             )}
 

@@ -37,7 +37,7 @@ const RecentPosts = () => {
     const text = (commentInputs[i] || '').trim();
     if (!text) return;
     setCommentInputs(p => ({ ...p, [i]: '' }));
-    alert("Comments on blockchain-secured posts are currently read-only.");
+    alert("Comments on progress posts are currently read-only.");
   };
 
   if (loading) return <div className="py-20 flex justify-center"><Loader text="Loading recent updates..." /></div>;
@@ -49,7 +49,7 @@ const RecentPosts = () => {
           <Newspaper className="w-10 h-10 text-[#1E3A8A]" />
         </div>
         <h2 className="text-xl font-bold text-slate-700">No Citizen Updates Yet</h2>
-        <p className="text-slate-400 text-sm max-w-xs leading-relaxed">The Gram Pradhaan hasn't published any blockchain-secured progress reports yet.</p>
+        <p className="text-slate-400 text-sm max-w-xs leading-relaxed">The Gram Pradhaan hasn't published any progress reports yet.</p>
       </div>
     );
   }
@@ -63,7 +63,7 @@ const RecentPosts = () => {
         </div>
         <div>
           <h2 className="text-xl font-extrabold text-slate-800 tracking-tight">Recent Progress</h2>
-          <p className="text-slate-400 text-xs font-semibold uppercase tracking-widest">{posts.length} blockchain-secured update{posts.length !== 1 ? 's' : ''}</p>
+          <p className="text-slate-400 text-xs font-semibold uppercase tracking-widest">{posts.length} progress update{posts.length !== 1 ? 's' : ''}</p>
         </div>
       </div>
 
@@ -157,7 +157,7 @@ const RecentPosts = () => {
             {/* Comments Section */}
             {openComments[post.id] && (
               <div className="px-5 pb-4 space-y-3 border-t border-slate-100 pt-3 animate-in slide-in-from-top-2 duration-300">
-                <p className="text-xs text-slate-400 font-medium italic">Comments are currently read-only for blockchain posts.</p>
+                <p className="text-xs text-slate-400 font-medium italic">Comments are currently read-only.</p>
                 
                 {/* Comment Input */}
                 <div className="flex gap-2 pt-1 opacity-50">
@@ -181,9 +181,6 @@ const RecentPosts = () => {
               </div>
             )}
             
-            <div className="px-5 py-2 bg-blue-50/30 border-t border-blue-50/50 flex justify-end">
-               <span className="text-[9px] font-bold text-blue-300 uppercase tracking-[0.1em]">Blockchain ID: {post.blockchainTxnId?.substring(0, 12)}...</span>
-            </div>
           </div>
         </div>
       ))}

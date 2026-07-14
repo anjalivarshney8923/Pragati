@@ -1,8 +1,8 @@
 package com.pragati.entity;
-
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -23,16 +23,10 @@ public class WorkProof {
     private String description;
 
     @Column(nullable = false)
-    private String imageUrl; // Main/After image
+    private String imageUrl;   // Main/After image
 
     @Column(nullable = true)
     private String beforeImageUrl;
-
-    @Column(name = "blockchain_txn_id", nullable = true)
-    private String blockchainTxnId;
-
-    @Column(name = "blockchain_hash", nullable = true)
-    private String blockchainHash;
 
     @CreationTimestamp
     @Column(updatable = false)

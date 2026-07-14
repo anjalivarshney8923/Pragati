@@ -13,6 +13,7 @@ import DashboardLayout from './components/dashboard/DashboardLayout';
 import DashboardOverview from './pages/dashboard/DashboardOverview';
 import RaiseComplaint from './pages/dashboard/RaiseComplaint';
 import MyComplaints from './pages/dashboard/MyComplaints';
+import ComplaintDetails from './pages/dashboard/ComplaintDetails';
 import VillageFunds from './pages/dashboard/VillageFunds';
 import GovernmentSchemes from './pages/dashboard/GovernmentSchemes';
 import Expenditure from './pages/dashboard/Expenditure';
@@ -64,6 +65,7 @@ function App() {
             <Route path="/dashboard" element={<DashboardOverview />} />
             <Route path="/complaint" element={<RaiseComplaint />} />
             <Route path="/dashboard/complaints" element={<MyComplaints />} />
+            <Route path="/dashboard/complaints/:id" element={<ComplaintDetails />} />
             <Route path="/dashboard/rights" element={<MyRights />} />
             <Route path="/dashboard/funds" element={<VillageFunds />} />
             <Route path="/dashboard/expenditure" element={<Expenditure />} />

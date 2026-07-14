@@ -59,4 +59,41 @@ public class GeocodingService {
             throw new RuntimeException("Geocoding failed: " + e.getMessage());
         }
     }
+
+    private final String REVERSE_NOMINATIM_URL = "https://nominatim.openstreetmap.org/reverse";
+
+    public GeocodingResponseDTO reverseGeocode(Double latitude, Double longitude) {
+        try {
+            log.info("Reverse geocoding coordinates: {}, {}", latitude, longitude);
+
+            String url = UriComponentsBuilder.fromHttpUrl(REVERSE_NOMINATIM_URL)
+                    .queryParam("lat", latitude)
+                    .queryParam("lon", longitude)
+                    .queryParam("format", "json")
+                    .toUriString();
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("User-Agent", "Pragati-App (anjalivarshney8923@gmail.com)");
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+
+            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
+
+            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+                JSONObject obj = new JSONObject(response.getBody());
+                String displayName = obj.optString("display_name", "Unknown Location");
+                return GeocodingResponseDTO.builder()
+                        .latitude(latitude)
+                        .longitude(longitude)
+                        .displayName(displayName)
+                        .build();
+            }
+            
+            log.warn("No reverse geocoding results found for: {}, {}", latitude, longitude);
+            return null;
+
+        } catch (Exception e) {
+            log.error("Reverse geocoding failed: {}", e.getMessage());
+            throw new RuntimeException("Reverse geocoding failed: " + e.getMessage());
+        }
+    }
 }

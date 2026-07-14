@@ -1,15 +1,36 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Menu, LogOut, User, Bell } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { notificationService } from '../../services/api';
 
 const Navbar = ({ toggleSidebar }) => {
   const { t, i18n } = useTranslation();
-  
+  const [unreadCount, setUnreadCount] = useState(0);
   const navigate = useNavigate();
 
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const userName = user.name || user.fullName || 'Villager';
+
+  useEffect(() => {
+    const fetchNotificationCount = async () => {
+      try {
+        const notifs = await notificationService.getUserNotifications();
+        if (Array.isArray(notifs)) {
+          const unread = notifs.filter(n => !n.isRead).length;
+          setUnreadCount(unread);
+        }
+      } catch (err) {
+        console.error("Failed to fetch notification count", err);
+      }
+    };
+    fetchNotificationCount();
+    // Poll every 10 seconds for notifications
+    const interval = setInterval(fetchNotificationCount, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
   const handleLogout = () => {
-    // Clear auth-related storage and redirect to login
     try {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
@@ -53,8 +74,15 @@ const Navbar = ({ toggleSidebar }) => {
 
         {/* Right side */}
         <div className="flex items-center gap-3 sm:gap-5">
-          <button className="relative p-2 text-slate-400 hover:text-slate-500 rounded-full hover:bg-slate-100 transition-colors">
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 border-2 border-white"></span>
+          <button 
+            onClick={() => navigate('/dashboard/notifications')}
+            className="relative p-2 text-slate-400 hover:text-slate-500 rounded-full hover:bg-slate-100 transition-colors"
+          >
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-black rounded-full min-w-4 h-4 px-1 flex items-center justify-center border border-white">
+                {unreadCount}
+              </span>
+            )}
             <Bell size={20} />
           </button>
           
@@ -68,10 +96,10 @@ const Navbar = ({ toggleSidebar }) => {
               {i18n.language === 'en' ? 'हिंदी' : 'English'}
             </button>
             <div className="hidden sm:flex flex-col items-end">
-              <span className="text-sm font-semibold text-slate-700 leading-none mb-1">Anjali</span>
+              <span className="text-sm font-semibold text-slate-700 leading-none mb-1">{userName}</span>
               <span className="text-xs text-slate-500 leading-none">{t('navbar.villager')}</span>
             </div>
-            <button className="flex items-center gap-2 hover:opacity-80 transition-opacity focus:outline-none">
+            <button onClick={() => navigate('/dashboard')} className="flex items-center gap-2 hover:opacity-80 transition-opacity focus:outline-none">
               <div className="h-9 w-9 rounded-full bg-blue-100 flex items-center justify-center border border-blue-200 text-gov-blue">
                 <User size={18} />
               </div>

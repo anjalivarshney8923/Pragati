@@ -45,7 +45,7 @@ const WorkProofModal = ({ complaint, onClose, onRefresh }) => {
       }, 2000);
     } catch (err) {
       console.error(err);
-      alert("Failed to submit work proof to blockchain");
+      alert("Failed to submit work proof");
     } finally {
       setIsSubmitting(false);
     }
@@ -55,18 +55,18 @@ const WorkProofModal = ({ complaint, onClose, onRefresh }) => {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
       <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-8 duration-500">
         <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-          <div className="flex items-center gap-3">
-             <div className="p-2.5 bg-[#1E3A8A] rounded-xl text-white shadow-lg shadow-blue-100">
-                <Shield className="w-5 h-5" />
+             <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-[#1E3A8A] rounded-xl text-white shadow-lg shadow-blue-100">
+                   <CheckCircle className="w-5 h-5" />
+                </div>
+                <div>
+                   <h3 className="text-lg font-black text-slate-800 uppercase tracking-tighter">Submit Proof of Work</h3>
+                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Complaint #{complaint.id}</p>
+                </div>
              </div>
-             <div>
-                <h3 className="text-lg font-black text-slate-800 uppercase tracking-tighter">Submit Immutable Proof of Work</h3>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Complaint #{complaint.id} · Fingerprinted on Algorand</p>
-             </div>
-          </div>
-          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
-            <X className="w-5 h-5 text-slate-400" />
-          </button>
+           <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+             <X className="w-5 h-5 text-slate-400" />
+           </button>
         </div>
 
         <div className="p-8">
@@ -75,8 +75,8 @@ const WorkProofModal = ({ complaint, onClose, onRefresh }) => {
               <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto shadow-inner">
                 <CheckCircle className="w-10 h-10" />
               </div>
-              <h4 className="text-2xl font-black text-slate-800 tracking-tight">Proof Anchored Successfully</h4>
-              <p className="text-slate-500 font-medium">The resolution evidence has been hashed and secured on the blockchain ledger.</p>
+              <h4 className="text-2xl font-black text-slate-800 tracking-tight">Proof Submitted Successfully</h4>
+              <p className="text-slate-500 font-medium">The resolution evidence has been saved successfully.</p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -111,20 +111,13 @@ const WorkProofModal = ({ complaint, onClose, onRefresh }) => {
                         <Upload className="w-8 h-8 text-slate-300" />
                       </div>
                       <span className="text-sm font-black text-slate-800 tracking-tight uppercase">Select Site Image</span>
-                      <span className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest text-center">JPG, PNG or WEBP · Full metadata hashing will be applied</span>
+                      <span className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest text-center">JPG, PNG or WEBP</span>
                       <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} required />
                     </label>
                   )}
                 </div>
               </div>
 
-              <div className="bg-indigo-50 p-5 rounded-2xl border border-indigo-100 flex items-start gap-4">
-                <Lock className="w-5 h-5 text-indigo-600 mt-1" />
-                <div>
-                  <p className="text-xs font-black text-indigo-700 uppercase tracking-tighter">Blockchain Protocol Notice</p>
-                  <p className="text-[10px] font-bold text-indigo-500/80 leading-relaxed max-w-md">By submitting, you generate a permanent SHA-256 fingerprint of this image. This proof is anchored on the decentralized ledger and cannot be replaced or deleted by any administrator.</p>
-                </div>
-              </div>
 
               <div className="flex items-center gap-3 pt-2">
                 <button
@@ -142,7 +135,7 @@ const WorkProofModal = ({ complaint, onClose, onRefresh }) => {
                   {isSubmitting ? (
                     <><Loader variant="white" size="small" /> Processing Data...</>
                   ) : (
-                    <><Shield className="w-4 h-4" /> Secure Proof to Blockchain</>
+                    <><CheckCircle className="w-4 h-4" /> Submit Proof of Work</>
                   )}
                 </button>
               </div>

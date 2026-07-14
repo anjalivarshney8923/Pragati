@@ -36,4 +36,23 @@ public class GeocodingController {
                     .body(Collections.singletonMap("error", "Geocoding failed: " + e.getMessage()));
         }
     }
+
+    @GetMapping("/reverse")
+    public ResponseEntity<?> reverseGeocode(@RequestParam Double latitude, @RequestParam Double longitude) {
+        try {
+            GeocodingResponseDTO result = geocodingService.reverseGeocode(latitude, longitude);
+            
+            if (result != null) {
+                return ResponseEntity.ok(result);
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Collections.singletonMap("error", "Address not found for these coordinates"));
+            }
+            
+        } catch (Exception e) {
+            log.error("Backend reverse geocoding error: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonMap("error", "Reverse geocoding failed: " + e.getMessage()));
+        }
+    }
 }

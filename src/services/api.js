@@ -118,10 +118,6 @@ export const complaintService = {
   escalateToBDO: async (id) => {
     const response = await api.post(`/complaints/${id}/escalate/bdo`);
     return response.data;
-  },
-  verifyComplaintIntegrity: async (id) => {
-    const response = await api.get(`/complaints/${id}/verify`);
-    return response.data;
   }
 };
 
@@ -129,6 +125,12 @@ export const geoService = {
   geocodeAddress: async (address) => {
     const response = await api.get('/geocode', {
       params: { address }
+    });
+    return response.data;
+  },
+  reverseGeocode: async (lat, lon) => {
+    const response = await api.get('/geocode/reverse', {
+      params: { latitude: lat, longitude: lon }
     });
     return response.data;
   }
@@ -161,8 +163,8 @@ export const workProofService = {
     const response = await api.get("/workproof");
     return response.data;
   },
-  verifyWorkProof: async (id) => {
-    const response = await api.get(`/workproof/${id}/verify`);
+  getWorkProofByComplaintId: async (complaintId) => {
+    const response = await api.get(`/workproof/complaint/${complaintId}`);
     return response.data;
   }
 };

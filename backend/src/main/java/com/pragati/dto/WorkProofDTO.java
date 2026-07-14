@@ -16,7 +16,5 @@ public class WorkProofDTO {
     private String description;
     private String imageUrl;
     private String beforeImageUrl;
-    private String blockchainTxnId;
-    private String blockchainHash;
     private LocalDateTime createdAt;
 }

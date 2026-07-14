@@ -1,19 +1,41 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { FileWarning, CheckCircle2, Wallet, TrendingDown, ArrowRight, LayoutList } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { complaintService } from '../../services/api';
 import StatCard from '../../components/dashboard/StatCard';
 import Table from '../../components/dashboard/Table';
 
 const DashboardOverview = () => {
   const { t } = useTranslation();
-  // Dummy Data
-  const recentComplaints = [
-    { id: 'C001', title: 'Street light not working in Sector 4', status: 'Pending', date: 'Oct 24, 2023' },
-    { id: 'C002', title: 'Water pipe leakage near Panchayat Bhawan', status: 'Resolved', date: 'Oct 22, 2023' },
-    { id: 'C003', title: 'Request for new dustbins', status: 'In Progress', date: 'Oct 18, 2023' },
-    { id: 'C004', title: 'Pothole repair on Main Road', status: 'Pending', date: 'Oct 15, 2023' },
-  ];
+  const [complaints, setComplaints] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDashboardStats = async () => {
+      try {
+        const data = await complaintService.getMyComplaints();
+        if (Array.isArray(data)) {
+          setComplaints(data);
+        }
+      } catch (err) {
+        console.error("Failed to load dashboard complaints:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchDashboardStats();
+  }, []);
+
+  const totalCount = complaints.length;
+  const resolvedCount = complaints.filter(c => c.status?.toUpperCase() === 'RESOLVED').length;
+
+  const recentComplaints = complaints.slice(0, 4).map(c => ({
+    id: c.id,
+    title: c.title,
+    status: c.status?.charAt(0).toUpperCase() + c.status?.slice(1).toLowerCase().replace('_', ' '),
+    date: c.createdAt ? new Date(c.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'
+  }));
 
   const columns = [
     { header: 'Complaint Title', accessor: 'title' },
@@ -22,8 +44,8 @@ const DashboardOverview = () => {
       accessor: 'status',
       render: (row) => (
         <span className={`px-3 py-1 text-xs font-semibold rounded-full ${
-          row.status === 'Resolved' ? 'bg-green-100 text-green-700' :
-          row.status === 'In Progress' ? 'bg-blue-100 text-blue-700' :
+          row.status?.toUpperCase() === 'RESOLVED' ? 'bg-green-100 text-green-700' :
+          row.status?.toUpperCase() === 'IN_PROGRESS' || row.status?.toUpperCase() === 'IN PROGRESS' ? 'bg-blue-100 text-blue-700' :
           'bg-orange-100 text-orange-700'
         }`}>
           {row.status}
@@ -53,14 +75,14 @@ const DashboardOverview = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         <StatCard 
           icon={<FileWarning className="w-6 h-6" />} 
-          number="12" 
+          number={isLoading ? "..." : totalCount.toString()} 
           label={t('dashboard.totalComplaints')} 
           colorClass="text-orange-600"
           bgClass="bg-orange-100"
         />
         <StatCard 
           icon={<CheckCircle2 className="w-6 h-6" />} 
-          number="8" 
+          number={isLoading ? "..." : resolvedCount.toString()} 
           label={t('dashboard.resolvedComplaints')} 
           colorClass="text-green-600"
           bgClass="bg-green-100"

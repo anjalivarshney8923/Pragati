@@ -9,7 +9,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.pragati.dto.WorkProofDTO;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/workproof")
@@ -39,9 +38,18 @@ public class WorkProofController {
         return ResponseEntity.ok(workProofService.getAllWorkProofs());
     }
 
-    @GetMapping("/{id}/verify")
-    public ResponseEntity<Map<String, Object>> verifyWorkProof(@PathVariable Long id) {
-        Map<String, Object> result = workProofService.verifyWorkProof(id);
-        return ResponseEntity.ok(result);
+    @GetMapping("/complaint/{complaintId}")
+    public ResponseEntity<?> getWorkProofByComplaintId(@PathVariable Long complaintId) {
+        try {
+            WorkProofDTO wp = workProofService.getWorkProofByComplaintId(complaintId);
+            if (wp != null) {
+                return ResponseEntity.ok(wp);
+            } else {
+                return ResponseEntity.status(404).body("No work proof found for this complaint");
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error fetching work proof: " + e.getMessage());
+        }
     }
+
 }

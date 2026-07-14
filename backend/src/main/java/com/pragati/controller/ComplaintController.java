@@ -88,14 +88,6 @@ public class ComplaintController {
         }
     }
 
-    @GetMapping("/{id}/verify")
-    public ResponseEntity<?> verifyComplaintIntegrity(@PathVariable Long id) {
-        try {
-            return ResponseEntity.ok(complaintService.verifyComplaintIntegrity(id));
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
-    }
 
     @PostMapping("/{id}/support")
     public ResponseEntity<?> supportComplaint(@PathVariable Long id) {
@@ -121,12 +113,4 @@ public class ComplaintController {
         }
     }
 
-    @GetMapping("/{id}/history")
-    public ResponseEntity<?> getComplaintHistory(@PathVariable Long id) {
-        try {
-            return ResponseEntity.ok(complaintService.getComplaintHistory(id));
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
-    }
 }

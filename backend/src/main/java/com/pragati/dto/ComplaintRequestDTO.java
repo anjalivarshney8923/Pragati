@@ -4,6 +4,7 @@ import lombok.Data;
 import org.springframework.web.multipart.MultipartFile;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import java.util.List;
 
 @Data
 public class ComplaintRequestDTO {
@@ -26,4 +27,5 @@ public class ComplaintRequestDTO {
     private Double longitude;
 
     private MultipartFile image;
+    private List<MultipartFile> images;
 }

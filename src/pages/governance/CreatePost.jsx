@@ -99,7 +99,7 @@ const CreatePost = () => {
     
     setSubmitting(true);
     try {
-      // Use the workProofService to anchor this update to the blockchain
+      // Use the workProofService to submit this update
       // Passing null as complaintId for general daily updates
       await workProofService.submitWorkProof(
         null, 
@@ -108,11 +108,11 @@ const CreatePost = () => {
         beforeFile
       );
       
-      toast.success("Update published and secured on blockchain!");
+      toast.success("Update published successfully!");
       navigate('/governance/settings');
     } catch (err) {
       console.error('Publication failed:', err);
-      toast.error("Failed to secure report on blockchain. Please try again.");
+      toast.error("Failed to publish report. Please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -133,8 +133,8 @@ const CreatePost = () => {
           <ChevronLeft className="w-4 h-4 text-slate-600" />
         </button>
         <div>
-          <h1 className="text-2xl font-extrabold text-[#1E3A8A] uppercase tracking-tighter">Blockchain Daily Update</h1>
-          <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest">Publish verifiable village progress</p>
+          <h1 className="text-2xl font-extrabold text-[#1E3A8A] uppercase tracking-tighter">Daily Progress Update</h1>
+          <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest">Publish village progress updates</p>
         </div>
       </div>
 

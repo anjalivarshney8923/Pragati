@@ -14,8 +14,7 @@ const MyPosts = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [openComments, setOpenComments] = useState({});
-  const [verifyingIds, setVerifyingIds] = useState({});
-  const [verificationResults, setVerificationResults] = useState({});
+
 
   const officer = JSON.parse(localStorage.getItem('officer') || '{}');
 
@@ -37,18 +36,6 @@ const MyPosts = () => {
     }
   };
 
-  const handleVerify = async (id) => {
-    setVerifyingIds(p => ({ ...p, [id]: true }));
-    try {
-      const result = await workProofService.verifyWorkProof(id);
-      setVerificationResults(p => ({ ...p, [id]: result.verified ? 'VERIFIED' : 'TAMPERED' }));
-    } catch (err) {
-      console.error(err);
-      alert("Verification failed");
-    } finally {
-      setVerifyingIds(p => ({ ...p, [id]: false }));
-    }
-  };
 
   if (loading && posts.length === 0) return <div className="p-20 flex justify-center"><Loader text="Loading work proofs..." /></div>;
 
@@ -163,60 +150,7 @@ const MyPosts = () => {
                 <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/90 backdrop-blur-md text-white rounded-xl text-[9px] font-black uppercase tracking-widest shadow-xl border border-emerald-400">
                   <BadgeCheck className="w-3 h-3" /> Resolved
                 </div>
-                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1E3A8A]/90 backdrop-blur-md text-white rounded-xl text-[9px] font-black uppercase tracking-widest shadow-xl border border-blue-400">
-                  <Lock className="w-3 h-3" /> Immutable
-                </div>
               </div>
-            </div>
-
-            {/* Blockchain Evidence Section (Requested Integration) */}
-            <div className="mx-5 mb-4 p-4 bg-slate-50 border border-slate-100 rounded-2xl space-y-4">
-               {/* Badge & Verify Status */}
-               <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-lg bg-indigo-100 flex items-center justify-center">
-                       <Shield className="w-3.5 h-3.5 text-indigo-600" />
-                    </div>
-                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                       🔐 Secured by Blockchain
-                    </span>
-                  </div>
-
-                  {verificationResults[post.id] === 'VERIFIED' && (
-                    <div className="flex items-center gap-1.5 px-3 py-1 bg-green-100 text-green-700 rounded-full text-[9px] font-black uppercase tracking-[0.05em] animate-in zoom-in border border-green-200">
-                      <ShieldCheck className="w-3 h-3" /> 🟢 VERIFIED
-                    </div>
-                  )}
-                  {verificationResults[post.id] === 'TAMPERED' && (
-                    <div className="flex items-center gap-1.5 px-3 py-1 bg-red-100 text-red-700 rounded-full text-[9px] font-black uppercase tracking-[0.05em] animate-bounce border border-red-200">
-                      <AlertTriangle className="w-3 h-3" /> 🔴 TAMPERED
-                    </div>
-                  )}
-               </div>
-
-               <div className="flex gap-2">
-                  <a 
-                    href={`https://testnet.algoscan.app/tx/${post.blockchainTxnId}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" /> View on Blockchain
-                  </a>
-                  
-                  <button 
-                    onClick={() => handleVerify(post.id)}
-                    disabled={verifyingIds[post.id]}
-                    className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 disabled:opacity-50"
-                  >
-                    {verifyingIds[post.id] ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <ShieldCheck className="w-3.5 h-3.5" />
-                    )}
-                    Verify Proof
-                  </button>
-               </div>
             </div>
 
             {/* Post Metadata Footer */}
@@ -231,7 +165,6 @@ const MyPosts = () => {
                      <span className="text-[10px] font-bold">Feedback</span>
                   </div>
                </div>
-               <span className="text-[9px] font-bold text-slate-300 uppercase tracking-widest bg-slate-50 px-2 py-0.5 rounded">Anchored: {post.blockchainHash?.substring(0, 8)}...</span>
             </div>
 
           </div>
