@@ -23,7 +23,7 @@ import FaceVerification from '../components/FaceVerification';
 import OTPInput from '../components/OTPInput';
 import { getStates, getDistricts, getVillages, getPanchayats } from '../utils/locationData';
 
-
+const AI_SERVICE_URL = import.meta.env.VITE_AI_SERVICE_URL || 'http://127.0.0.1:5001';
 
 const Register = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -203,7 +203,7 @@ const Register = () => {
       try {
         const fd = new FormData();
         fd.append('aadhaar', aadhaarFile);
-        const res = await fetch('http://127.0.0.1:5002/extract_dob', { method: 'POST', body: fd });
+        const res = await fetch(`${AI_SERVICE_URL}/extract_dob`, { method: 'POST', body: fd });
         if (res.ok) {
           const data = await res.json();
           if (data && data.dob) setValue('dob', data.dob);

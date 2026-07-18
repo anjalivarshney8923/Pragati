@@ -1,6 +1,8 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import Webcam from "react-webcam";
 
+const AI_SERVICE_URL = import.meta.env.VITE_AI_SERVICE_URL || 'http://127.0.0.1:5001';
+
 export default function FaceVerification({
     onCapture,
     onContinue,
@@ -43,7 +45,7 @@ export default function FaceVerification({
             setStatus("Extracting DOB from Aadhaar...");
             const fd = new FormData();
             fd.append("image", file);
-            const res = await fetch("http://127.0.0.1:5002/extract_dob", { method: "POST", body: fd });
+            const res = await fetch(`${AI_SERVICE_URL}/extract_dob`, { method: "POST", body: fd });
             if (!res.ok) {
                 setStatus("DOB extraction failed");
                 return null;
@@ -109,7 +111,7 @@ export default function FaceVerification({
         setStatus("Uploading images to verification service...");
 
         try {
-            const res = await fetch("http://127.0.0.1:5002/verify", { method: "POST", body: fd });
+            const res = await fetch(`${AI_SERVICE_URL}/verify`, { method: "POST", body: fd });
             if (!res.ok) {
                 const txt = await res.text();
                 throw new Error(txt || res.statusText);
